@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Lock, Clock, ArrowRight } from "lucide-react";
+import { Clock, ArrowRight } from "lucide-react";
 import featuredImg from "@/assets/featured-article.jpg";
 
 const articles = [
@@ -103,11 +103,6 @@ export default function FeaturedArticles() {
                   <span className="font-body text-xs font-semibold uppercase tracking-widest text-secondary">
                     {a.category}
                   </span>
-                  {a.premium && (
-                    <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-bold uppercase text-primary">
-                      <Lock className="h-2.5 w-2.5" /> Members
-                    </span>
-                  )}
                 </div>
                 <h4 className="font-headline text-lg font-bold leading-snug text-foreground group-hover:text-primary transition-colors">
                   <Link to={`/article/${a.id}`}>{a.title}</Link>
