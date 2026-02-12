@@ -1,6 +1,5 @@
 import Navbar from "@/components/Navbar";
 import BookSidebar from "@/components/BookSidebar";
-import StickyPaywallBanner from "@/components/StickyPaywallBanner";
 import FooterSection from "@/components/FooterSection";
 import { Clock, Share2 } from "lucide-react";
 import featuredImg from "@/assets/featured-article.jpg";
@@ -21,14 +20,12 @@ export default function ArticlePage() {
     <div className="min-h-screen bg-background">
       <Navbar />
 
-      {/* Hero image */}
       <div className="relative h-[40vh] overflow-hidden lg:h-[50vh]">
         <img src={featuredImg} alt="" className="h-full w-full object-cover" />
         <div className="absolute inset-0 bg-gradient-to-t from-background via-background/30 to-transparent" />
       </div>
 
       <div className="container relative -mt-24 z-10 grid gap-12 pb-24 lg:grid-cols-[1fr_300px]">
-        {/* Article */}
         <article className="rounded bg-card p-6 shadow-lg sm:p-10 lg:p-14">
           <div className="mb-6 flex items-center gap-2">
             <span className="font-body text-xs font-semibold uppercase tracking-widest text-secondary">
@@ -58,7 +55,6 @@ export default function ArticlePage() {
               <p key={i}>{p}</p>
             ))}
 
-            {/* Native ad after paragraph 3 */}
             <div className="rounded border border-secondary/30 bg-secondary/5 p-5 text-center">
               <p className="font-body text-xs uppercase tracking-wider text-muted-foreground mb-1">From Our Collection</p>
               <p className="font-headline text-base font-semibold text-foreground">
@@ -69,42 +65,11 @@ export default function ArticlePage() {
               </p>
             </div>
 
-            {articleContent.slice(3, 5).map((p, i) => (
+            {articleContent.slice(3).map((p, i) => (
               <p key={i + 3}>{p}</p>
             ))}
-
-            {/* Paywall blur zone */}
-            <div className="relative">
-              <div className="paywall-blur space-y-6">
-                {articleContent.slice(5).map((p, i) => (
-                  <p key={i + 5}>{p}</p>
-                ))}
-              </div>
-
-              {/* Paywall overlay */}
-              <div className="absolute inset-x-0 bottom-0 flex flex-col items-center justify-end pb-2 pt-32">
-                <div className="w-full max-w-md rounded border border-border bg-card p-8 text-center shadow-xl">
-                  <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
-                    <span className="font-headline text-2xl text-primary">🔒</span>
-                  </div>
-                  <h3 className="font-headline text-xl font-bold text-foreground">
-                    Continue Reading
-                  </h3>
-                  <p className="mt-2 font-body text-sm text-muted-foreground">
-                    This is a premium article. Join the Inner Circle for unlimited access.
-                  </p>
-                  <a
-                    href="/subscribe"
-                    className="mt-4 inline-block rounded bg-primary px-8 py-3 font-body text-sm font-semibold uppercase tracking-wider text-primary-foreground transition-all hover:brightness-125"
-                  >
-                    Become a Scholar — $5/mo
-                  </a>
-                </div>
-              </div>
-            </div>
           </div>
 
-          {/* Author bio */}
           <div className="mt-12 rounded border border-border bg-cream-dark p-6">
             <h4 className="font-headline text-sm font-bold uppercase tracking-wider text-muted-foreground mb-3">About the Author</h4>
             <div className="flex items-start gap-4">
@@ -124,13 +89,11 @@ export default function ArticlePage() {
           </div>
         </article>
 
-        {/* Sidebar */}
         <div className="hidden lg:block sticky top-20 self-start">
           <BookSidebar />
         </div>
       </div>
 
-      <StickyPaywallBanner articlesLeft={1} />
       <FooterSection />
     </div>
   );
