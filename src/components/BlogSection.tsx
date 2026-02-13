@@ -56,7 +56,7 @@ export default function BlogSection() {
             </h2>
           </div>
           <Link
-            to="/article/thamel-bookshops"
+            to="/blog"
             className="hidden sm:inline-flex items-center gap-1 font-body text-sm font-semibold text-primary hover:underline"
           >
             All Posts <ArrowRight className="h-3.5 w-3.5" />
