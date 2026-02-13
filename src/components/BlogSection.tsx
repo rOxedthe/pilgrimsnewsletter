@@ -1,5 +1,8 @@
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Calendar, User, ArrowRight } from "lucide-react";
+
+const categories = ["All", "Culture", "Heritage", "Community", "Literature"];
 
 const blogPosts = [
   {
@@ -37,10 +40,13 @@ const blogPosts = [
 ];
 
 export default function BlogSection() {
+  const [active, setActive] = useState("All");
+  const filtered = active === "All" ? blogPosts : blogPosts.filter((p) => p.category === active);
+
   return (
     <section className="bg-muted/50 py-16 lg:py-24">
       <div className="container">
-        <div className="mb-12 flex items-end justify-between border-b border-border pb-4">
+        <div className="mb-8 flex items-end justify-between border-b border-border pb-4">
           <div>
             <span className="font-body text-xs font-semibold uppercase tracking-widest text-secondary">
               From the Blog
@@ -57,8 +63,24 @@ export default function BlogSection() {
           </Link>
         </div>
 
+        <div className="mb-8 flex flex-wrap gap-2">
+          {categories.map((cat) => (
+            <button
+              key={cat}
+              onClick={() => setActive(cat)}
+              className={`rounded-full px-4 py-1.5 font-body text-xs font-semibold uppercase tracking-wider transition-colors ${
+                active === cat
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-muted text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+              }`}
+            >
+              {cat}
+            </button>
+          ))}
+        </div>
+
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-          {blogPosts.map((post) => (
+          {filtered.map((post) => (
             <article
               key={post.id}
               className="group rounded border border-border bg-card p-6 transition-all hover:shadow-lg hover:-translate-y-1"
