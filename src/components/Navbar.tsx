@@ -14,7 +14,7 @@ export default function Navbar() {
   const location = useLocation();
 
   return (
-    <nav className="sticky top-0 z-50 border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
+    <nav className="sticky top-0 z-50 border-b border-border bg-background backdrop-blur-none">
       <div className="container flex h-16 items-center justify-between">
         <Link to="/" className="flex items-center gap-3 group">
           <img src={logo} alt="Pilgrims Book House" className="h-10 w-auto" />
