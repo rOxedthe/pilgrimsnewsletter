@@ -52,7 +52,7 @@ export default function FeaturedArticles() {
           </h2>
         </div>
         <Link
-          to="/article/himalayan-wisdom"
+          to="/blog"
           className="hidden sm:inline-flex items-center gap-1 font-body text-sm font-semibold text-primary hover:underline"
         >
           View All <ArrowRight className="h-3.5 w-3.5" />

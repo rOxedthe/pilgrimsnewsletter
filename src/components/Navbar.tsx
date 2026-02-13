@@ -5,7 +5,7 @@ import logo from "@/assets/logo.png";
 
 const navLinks = [
   { label: "Home", to: "/" },
-  { label: "Articles", to: "/article/himalayan-wisdom" },
+  { label: "Articles", to: "/blog" },
   { label: "Publish With Us", to: "/subscribe" },
 ];
 
