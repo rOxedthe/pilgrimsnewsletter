@@ -6,7 +6,7 @@
 
 @layer base {
   :root {
-    --background: 40 33% 97%;
+    --background: 42 40% 95%;
     --foreground: 0 0% 8%;
 
     --card: 0 0% 100%;
@@ -43,8 +43,8 @@
     --gold-light: 39 50% 75%;
     --gold-dark: 39 45% 40%;
 
-    --cream: 40 33% 97%;
-    --cream-dark: 35 20% 92%;
+    --cream: 42 40% 95%;
+    --cream-dark: 38 25% 90%;
 
     --sidebar-background: 40 33% 97%;
     --sidebar-foreground: 0 0% 8%;
