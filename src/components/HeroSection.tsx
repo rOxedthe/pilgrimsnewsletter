@@ -1,14 +1,25 @@
 import { Link } from "react-router-dom";
 import { ArrowRight, ShoppingBag, PenLine } from "lucide-react";
-import heroImage from "@/assets/hero-image.jpg";
 
 export default function HeroSection() {
   return (
-    <section className="relative overflow-hidden">
-      <div className="absolute inset-0">
-        <img src={heroImage} alt="" className="h-full w-full object-cover" />
-        <div className="absolute inset-0 bg-gradient-to-r from-foreground/90 via-foreground/70 to-foreground/40" />
+    <section className="relative overflow-hidden bg-foreground">
+      {/* Decorative elements */}
+      <div className="absolute inset-0 opacity-[0.03]">
+        <div className="absolute top-0 left-0 w-full h-full"
+          style={{
+            backgroundImage: `repeating-linear-gradient(
+              0deg, transparent, transparent 60px,
+              hsl(var(--primary-foreground)) 60px, hsl(var(--primary-foreground)) 61px
+            ), repeating-linear-gradient(
+              90deg, transparent, transparent 60px,
+              hsl(var(--primary-foreground)) 60px, hsl(var(--primary-foreground)) 61px
+            )`,
+          }}
+        />
       </div>
+      <div className="absolute top-10 right-10 w-72 h-72 rounded-full bg-secondary/10 blur-3xl" />
+      <div className="absolute bottom-10 left-10 w-96 h-96 rounded-full bg-gold/5 blur-3xl" />
 
       <div className="container relative z-10 grid min-h-[75vh] grid-cols-1 items-center gap-12 py-20 lg:grid-cols-2">
         <div className="space-y-8 animate-fade-in">
@@ -51,7 +62,7 @@ export default function HeroSection() {
         </div>
 
         <div className="hidden lg:flex flex-col items-end gap-6 animate-fade-in-up" style={{ animationDelay: "0.3s" }}>
-          <div className="space-y-6 rounded border border-primary-foreground/20 bg-foreground/30 p-8 backdrop-blur-md">
+          <div className="space-y-6 rounded border border-primary-foreground/20 bg-primary-foreground/5 p-8 backdrop-blur-md">
             <p className="font-headline text-lg italic text-primary-foreground/70">
               "The only bookshop in Asia where every shelf is a pilgrimage."
             </p>

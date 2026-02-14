@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Menu, X } from "lucide-react";
+import { Menu, X, LogIn, LogOut, User } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
 import logo from "@/assets/logo.png";
 
 const navLinks = [
@@ -12,9 +13,10 @@ const navLinks = [
 export default function Navbar() {
   const [open, setOpen] = useState(false);
   const location = useLocation();
+  const { user, signOut } = useAuth();
 
   return (
-    <nav className="sticky top-0 z-50 border-b border-border bg-background backdrop-blur-none">
+    <nav className="sticky top-0 z-50 border-b border-border bg-background">
       <div className="container flex h-16 items-center justify-between">
         <Link to="/" className="flex items-center gap-3 group">
           <img src={logo} alt="Pilgrims Book House" className="h-10 w-auto" />
@@ -40,6 +42,29 @@ export default function Navbar() {
           >
             Shop Online
           </a>
+          {user ? (
+            <div className="flex items-center gap-3">
+              <span className="font-body text-xs text-muted-foreground flex items-center gap-1.5">
+                <User className="h-3.5 w-3.5" />
+                {user.email?.split("@")[0]}
+              </span>
+              <button
+                onClick={signOut}
+                className="inline-flex items-center gap-1.5 rounded border border-border px-3 py-1.5 font-body text-xs uppercase tracking-wider text-muted-foreground transition-colors hover:text-foreground hover:border-foreground"
+              >
+                <LogOut className="h-3.5 w-3.5" />
+                Sign Out
+              </button>
+            </div>
+          ) : (
+            <Link
+              to="/auth"
+              className="inline-flex items-center gap-1.5 rounded border border-border px-4 py-2 font-body text-xs font-semibold uppercase tracking-wider text-foreground transition-colors hover:bg-muted"
+            >
+              <LogIn className="h-3.5 w-3.5" />
+              Sign In
+            </Link>
+          )}
         </div>
 
         <button className="md:hidden text-foreground" onClick={() => setOpen(!open)} aria-label="Toggle menu">
@@ -58,6 +83,15 @@ export default function Navbar() {
             <a href="https://pilgrimsonline.com" target="_blank" rel="noopener noreferrer" className="inline-flex w-fit items-center gap-1.5 rounded bg-shop px-4 py-2 text-xs font-semibold uppercase tracking-wider text-shop-foreground">
               Shop Online
             </a>
+            {user ? (
+              <button onClick={() => { signOut(); setOpen(false); }} className="inline-flex w-fit items-center gap-1.5 font-body text-sm uppercase tracking-wide text-muted-foreground hover:text-primary">
+                <LogOut className="h-4 w-4" /> Sign Out
+              </button>
+            ) : (
+              <Link to="/auth" onClick={() => setOpen(false)} className="inline-flex w-fit items-center gap-1.5 font-body text-sm uppercase tracking-wide text-muted-foreground hover:text-primary">
+                <LogIn className="h-4 w-4" /> Sign In
+              </Link>
+            )}
           </div>
         </div>
       )}
