@@ -24,14 +24,14 @@ export default function HeroSection() {
       <div className="container relative z-10 grid min-h-[75vh] grid-cols-1 items-center gap-12 py-20 lg:grid-cols-2">
         <div className="space-y-8 animate-fade-in">
           <h1 className="font-headline text-4xl font-bold leading-tight text-foreground sm:text-5xl lg:text-6xl text-balance">
-            This Week's
+            Where Ancient Wisdom
             <br />
-            <span className="italic text-secondary">Story & Insights</span>
+            <span className="italic text-secondary">Meets the Modern Mind</span>
           </h1>
 
           <p className="max-w-lg font-body text-lg leading-relaxed text-muted-foreground">
-            Fresh perspectives on Himalayan philosophy, rare book discoveries, and the timeless art of
-            mindful reading — curated weekly from Asia's most legendary bookstore.
+            Deep essays on Himalayan philosophy, rare book discoveries, and the timeless art of
+            mindful reading — curated from Asia's most legendary bookstore.
           </p>
 
           <div className="flex flex-wrap gap-4">
