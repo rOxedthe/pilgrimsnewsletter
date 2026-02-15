@@ -13,6 +13,14 @@ import SettingsPage from "./pages/SettingsPage";
 import ProfilePage from "./pages/ProfilePage";
 import NotFound from "./pages/NotFound";
 import CookieConsent from "./components/CookieConsent";
+import AdminLogin from "./pages/admin/AdminLogin";
+import AdminLayout from "./components/admin/AdminLayout";
+import AdminProtectedRoute from "./components/admin/AdminProtectedRoute";
+import AdminDashboard from "./pages/admin/AdminDashboard";
+import AdminArticles from "./pages/admin/AdminArticles";
+import AdminArticleEditor from "./pages/admin/AdminArticleEditor";
+import AdminPageContent from "./pages/admin/AdminPageContent";
+import AdminSeoSettings from "./pages/admin/AdminSeoSettings";
 
 const queryClient = new QueryClient();
 
@@ -31,6 +39,14 @@ const App = () => (
             <Route path="/auth" element={<AuthPage />} />
             <Route path="/settings" element={<SettingsPage />} />
             <Route path="/profile" element={<ProfilePage />} />
+            <Route path="/admin/login" element={<AdminLogin />} />
+            <Route path="/admin" element={<AdminProtectedRoute><AdminLayout /></AdminProtectedRoute>}>
+              <Route index element={<AdminDashboard />} />
+              <Route path="articles" element={<AdminArticles />} />
+              <Route path="articles/:id" element={<AdminArticleEditor />} />
+              <Route path="content" element={<AdminPageContent />} />
+              <Route path="seo" element={<AdminSeoSettings />} />
+            </Route>
             <Route path="*" element={<NotFound />} />
           </Routes>
           <CookieConsent />
