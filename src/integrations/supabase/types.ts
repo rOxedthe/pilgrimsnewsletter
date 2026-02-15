@@ -150,6 +150,7 @@ export type Database = {
           display_name: string | null
           email_updates: boolean
           id: string
+          membership_tier: Database["public"]["Enums"]["membership_tier"]
           updated_at: string
           user_id: string
           username: string | null
@@ -161,6 +162,7 @@ export type Database = {
           display_name?: string | null
           email_updates?: boolean
           id?: string
+          membership_tier?: Database["public"]["Enums"]["membership_tier"]
           updated_at?: string
           user_id: string
           username?: string | null
@@ -172,6 +174,7 @@ export type Database = {
           display_name?: string | null
           email_updates?: boolean
           id?: string
+          membership_tier?: Database["public"]["Enums"]["membership_tier"]
           updated_at?: string
           user_id?: string
           username?: string | null
@@ -235,6 +238,7 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "moderator" | "user"
+      membership_tier: "member" | "premier_member"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -363,6 +367,7 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "moderator", "user"],
+      membership_tier: ["member", "premier_member"],
     },
   },
 } as const
