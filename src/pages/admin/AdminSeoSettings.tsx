@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
-import { Save, Plus, Trash2, RefreshCw, Download, Globe } from "lucide-react";
+import { Save, Plus, Trash2, RefreshCw, Download, Globe, Type } from "lucide-react";
 
 interface PageSeo {
   id: string;
@@ -20,15 +20,33 @@ interface PageSeo {
   updated_at: string;
 }
 
+interface ContentItem {
+  id: string;
+  page_path: string;
+  section_key: string;
+  content_value: string;
+}
+
+const LANDING_FIELDS = [
+  { key: "hero_title_line1", label: "Hero Title Line 1", type: "text" },
+  { key: "hero_title_line2", label: "Hero Title Line 2 (Accent)", type: "text" },
+  { key: "hero_description", label: "Hero Description", type: "textarea" },
+  { key: "hero_cta_primary_text", label: "Primary CTA Text", type: "text" },
+  { key: "hero_cta_primary_link", label: "Primary CTA Link", type: "text" },
+  { key: "hero_cta_secondary_text", label: "Secondary CTA Text", type: "text" },
+  { key: "hero_cta_secondary_link", label: "Secondary CTA Link", type: "text" },
+];
+
 export default function AdminSeoSettings() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const [edits, setEdits] = useState<Record<string, Partial<PageSeo>>>({});
+  const [contentEdits, setContentEdits] = useState<Record<string, string>>({});
   const [newPath, setNewPath] = useState("");
   const [sitemapXml, setSitemapXml] = useState<string | null>(null);
   const [generatingSitemap, setGeneratingSitemap] = useState(false);
 
-  const { data: pages, isLoading } = useQuery({
+  const { data: pages, isLoading: loadingSeo } = useQuery({
     queryKey: ["admin-page-seo"],
     queryFn: async () => {
       const { data, error } = await supabase.from("page_seo").select("*").order("page_path");
@@ -36,6 +54,21 @@ export default function AdminSeoSettings() {
       return data as PageSeo[];
     },
   });
+
+  const { data: landingContent, isLoading: loadingContent } = useQuery({
+    queryKey: ["admin-landing-content"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("page_content")
+        .select("*")
+        .eq("page_path", "/home")
+        .in("section_key", LANDING_FIELDS.map((f) => f.key));
+      if (error) throw error;
+      return data as ContentItem[];
+    },
+  });
+
+  const isLoading = loadingSeo || loadingContent;
 
   const getVal = (page: PageSeo, field: keyof PageSeo) =>
     (edits[page.id]?.[field] as string) ?? (page[field] as string);
@@ -56,7 +89,28 @@ export default function AdminSeoSettings() {
     onSuccess: () => {
       toast({ title: "SEO settings saved" });
       setEdits({});
+      setContentEdits({});
       queryClient.invalidateQueries({ queryKey: ["admin-page-seo"] });
+      queryClient.invalidateQueries({ queryKey: ["admin-landing-content"] });
+      queryClient.invalidateQueries({ queryKey: ["page-content"] });
+    },
+    onError: (err: any) => toast({ title: "Error", description: err.message, variant: "destructive" }),
+  });
+
+  const saveContentMutation = useMutation({
+    mutationFn: async () => {
+      const updates = Object.entries(contentEdits).map(([id, content_value]) =>
+        supabase.from("page_content").update({ content_value }).eq("id", id)
+      );
+      const results = await Promise.all(updates);
+      const err = results.find((r) => r.error);
+      if (err?.error) throw err.error;
+    },
+    onSuccess: () => {
+      toast({ title: "Landing page content saved" });
+      setContentEdits({});
+      queryClient.invalidateQueries({ queryKey: ["admin-landing-content"] });
+      queryClient.invalidateQueries({ queryKey: ["page-content"] });
     },
     onError: (err: any) => toast({ title: "Error", description: err.message, variant: "destructive" }),
   });
@@ -115,6 +169,24 @@ export default function AdminSeoSettings() {
   };
 
   const editCount = Object.keys(edits).length;
+  const contentEditCount = Object.keys(contentEdits).length;
+  const totalEdits = editCount + contentEditCount;
+
+  const getContentVal = (key: string) => {
+    const item = landingContent?.find((c) => c.section_key === key);
+    if (!item) return "";
+    return contentEdits[item.id] ?? item.content_value;
+  };
+
+  const handleContentEdit = (key: string, value: string) => {
+    const item = landingContent?.find((c) => c.section_key === key);
+    if (item) setContentEdits((prev) => ({ ...prev, [item.id]: value }));
+  };
+
+  const handleSaveAll = async () => {
+    if (editCount > 0) saveMutation.mutate();
+    if (contentEditCount > 0) saveContentMutation.mutate();
+  };
 
   if (isLoading) return <p className="text-muted-foreground">Loading...</p>;
 
@@ -125,9 +197,39 @@ export default function AdminSeoSettings() {
           <h1 className="font-headline text-2xl font-bold text-foreground">SEO & Sitemap</h1>
           <p className="font-body text-sm text-muted-foreground">Manage per-page meta tags, OG images, and generate your sitemap.</p>
         </div>
-        <Button onClick={() => saveMutation.mutate()} disabled={editCount === 0 || saveMutation.isPending}>
-          <Save className="mr-2 h-4 w-4" /> {saveMutation.isPending ? "Saving..." : `Save (${editCount})`}
+        <Button onClick={handleSaveAll} disabled={totalEdits === 0 || saveMutation.isPending || saveContentMutation.isPending}>
+          <Save className="mr-2 h-4 w-4" /> {saveMutation.isPending || saveContentMutation.isPending ? "Saving..." : `Save (${totalEdits})`}
         </Button>
+      </div>
+
+      {/* Landing Page Content */}
+      <div className="rounded border border-border bg-card p-5 space-y-4">
+        <div className="flex items-center gap-2">
+          <Type className="h-5 w-5 text-muted-foreground" />
+          <h2 className="font-headline text-lg font-semibold text-foreground">Landing Page Content</h2>
+        </div>
+        <p className="text-xs text-muted-foreground">Edit the hero section text, description, and call-to-action buttons.</p>
+        <div className="space-y-3">
+          {LANDING_FIELDS.map((field) => (
+            <div key={field.key} className="space-y-1">
+              <Label className="text-xs text-muted-foreground">{field.label}</Label>
+              {field.type === "textarea" ? (
+                <Textarea
+                  value={getContentVal(field.key)}
+                  onChange={(e) => handleContentEdit(field.key, e.target.value)}
+                  rows={2}
+                  placeholder={field.label}
+                />
+              ) : (
+                <Input
+                  value={getContentVal(field.key)}
+                  onChange={(e) => handleContentEdit(field.key, e.target.value)}
+                  placeholder={field.label}
+                />
+              )}
+            </div>
+          ))}
+        </div>
       </div>
 
       {/* Sitemap Section */}
