@@ -10,6 +10,7 @@ import SubscribePage from "./pages/SubscribePage";
 import BlogPage from "./pages/BlogPage";
 import AuthPage from "./pages/AuthPage";
 import NotFound from "./pages/NotFound";
+import CookieConsent from "./components/CookieConsent";
 
 const queryClient = new QueryClient();
 
@@ -28,6 +29,7 @@ const App = () => (
             <Route path="/auth" element={<AuthPage />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
+          <CookieConsent />
         </BrowserRouter>
       </AuthProvider>
     </TooltipProvider>

@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { ArrowRight, ShoppingBag, PenLine } from "lucide-react";
+import { ArrowRight, ShoppingBag } from "lucide-react";
 
 export default function HeroSection() {
   return (
@@ -23,22 +23,15 @@ export default function HeroSection() {
 
       <div className="container relative z-10 grid min-h-[75vh] grid-cols-1 items-center gap-12 py-20 lg:grid-cols-2">
         <div className="space-y-8 animate-fade-in">
-          <div className="inline-flex items-center gap-2 rounded-full border border-secondary/40 bg-secondary/10 px-4 py-1.5 backdrop-blur">
-            <PenLine className="h-4 w-4 text-secondary" />
-            <span className="font-body text-xs font-semibold uppercase tracking-widest text-secondary">
-              The Himalayan Review
-            </span>
-          </div>
-
           <h1 className="font-headline text-4xl font-bold leading-tight text-foreground sm:text-5xl lg:text-6xl text-balance">
-            Where Ancient Wisdom
+            This Week's
             <br />
-            <span className="italic text-secondary">Meets the Modern Mind</span>
+            <span className="italic text-secondary">Story & Insights</span>
           </h1>
 
           <p className="max-w-lg font-body text-lg leading-relaxed text-muted-foreground">
-            Deep essays on Himalayan philosophy, rare book discoveries, and the timeless art of
-            mindful reading — curated from Asia's most legendary bookstore.
+            Fresh perspectives on Himalayan philosophy, rare book discoveries, and the timeless art of
+            mindful reading — curated weekly from Asia's most legendary bookstore.
           </p>
 
           <div className="flex flex-wrap gap-4">

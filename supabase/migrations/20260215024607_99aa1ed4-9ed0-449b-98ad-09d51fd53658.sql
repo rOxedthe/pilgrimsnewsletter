@@ -1,0 +1,1 @@
+ALTER TABLE public.profiles ADD COLUMN email_updates boolean NOT NULL DEFAULT false;
