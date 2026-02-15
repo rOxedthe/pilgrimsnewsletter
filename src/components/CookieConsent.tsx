@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Cookie, X } from "lucide-react";
+import { ShieldCheck, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 const COOKIE_KEY = "cookie_consent";
@@ -36,8 +36,8 @@ export default function CookieConsent() {
   return (
     <div className="fixed bottom-0 left-0 right-0 z-[100] animate-fade-in">
       <div className="container pb-6">
-        <div className="rounded border border-border bg-card p-6 shadow-lg flex flex-col sm:flex-row items-start sm:items-center gap-4">
-          <Cookie className="h-6 w-6 text-muted-foreground shrink-0 mt-0.5" />
+        <div className="relative rounded border border-border bg-card p-6 shadow-lg flex flex-col sm:flex-row items-start sm:items-center gap-4">
+          <ShieldCheck className="h-6 w-6 text-muted-foreground shrink-0 mt-0.5" />
           <div className="flex-1">
             <p className="font-body text-sm text-foreground font-semibold">We use cookies</p>
             <p className="font-body text-xs text-muted-foreground mt-1">
