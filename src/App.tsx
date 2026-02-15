@@ -8,6 +8,8 @@ import Index from "./pages/Index";
 import ArticlePage from "./pages/ArticlePage";
 import SubscribePage from "./pages/SubscribePage";
 import BlogPage from "./pages/BlogPage";
+import BlogListPage from "./pages/BlogListPage";
+import BlogPostPage from "./pages/BlogPostPage";
 import AuthPage from "./pages/AuthPage";
 import SettingsPage from "./pages/SettingsPage";
 import ProfilePage from "./pages/ProfilePage";
@@ -22,6 +24,8 @@ import AdminArticleEditor from "./pages/admin/AdminArticleEditor";
 import AdminPageContent from "./pages/admin/AdminPageContent";
 import AdminSeoSettings from "./pages/admin/AdminSeoSettings";
 import AdminUsers from "./pages/admin/AdminUsers";
+import AdminBlogPosts from "./pages/admin/AdminBlogPosts";
+import AdminBlogEditor from "./pages/admin/AdminBlogEditor";
 
 const queryClient = new QueryClient();
 
@@ -35,6 +39,8 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/blog" element={<BlogPage />} />
+            <Route path="/blogs" element={<BlogListPage />} />
+            <Route path="/blog/:slug" element={<BlogPostPage />} />
             <Route path="/article/:slug" element={<ArticlePage />} />
             <Route path="/subscribe" element={<SubscribePage />} />
             <Route path="/auth" element={<AuthPage />} />
@@ -45,6 +51,8 @@ const App = () => (
               <Route index element={<AdminDashboard />} />
               <Route path="articles" element={<AdminArticles />} />
               <Route path="articles/:id" element={<AdminArticleEditor />} />
+              <Route path="blog" element={<AdminBlogPosts />} />
+              <Route path="blog/:id" element={<AdminBlogEditor />} />
               <Route path="content" element={<AdminPageContent />} />
               <Route path="users" element={<AdminUsers />} />
               <Route path="seo" element={<AdminSeoSettings />} />
