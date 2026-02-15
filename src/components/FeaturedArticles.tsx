@@ -1,45 +1,28 @@
 import { Link } from "react-router-dom";
 import { Clock, ArrowRight } from "lucide-react";
 import AuthorAvatar from "@/components/AuthorAvatar";
+import { useArticles } from "@/hooks/useArticles";
 import featuredImg from "@/assets/featured-article.jpg";
 
-const articles = [
-  {
-    id: "himalayan-wisdom",
-    title: "The Lost Libraries of Mustang: A Journey Through Forbidden Knowledge",
-    excerpt: "Deep within the former kingdom of Lo lies a trove of manuscripts that could reshape our understanding of Tibetan Buddhism...",
-    author: "Dr. Tenzin Dorje",
-    date: "Feb 10, 2026",
-    readTime: "12 min read",
-    image: featuredImg,
-    premium: false,
-    category: "Philosophy",
-  },
-  {
-    id: "meditation-science",
-    title: "The Neuroscience of Himalayan Meditation: What 1,000 Hours of Silence Reveals",
-    excerpt: "Recent studies at Kathmandu University have produced startling results about the effects of prolonged silent retreat on neural plasticity...",
-    author: "Maya Shakya",
-    date: "Feb 6, 2026",
-    readTime: "8 min read",
-    premium: true,
-    category: "Science",
-  },
-  {
-    id: "rare-books",
-    title: "First Editions Worth a Fortune: The Hidden Market of Himalayan Bibliophilia",
-    excerpt: "From hand-printed Tibetan woodblock texts to Victorian-era expedition journals, the rare book market of the Himalayan region is booming...",
-    author: "Rajesh Hamal",
-    date: "Feb 2, 2026",
-    readTime: "6 min read",
-    premium: true,
-    category: "Collections",
-  },
-];
-
 export default function FeaturedArticles() {
+  const { data: articles = [], isLoading } = useArticles({ featured: true, limit: 3 });
+
+  if (isLoading) {
+    return (
+      <section className="container py-16 lg:py-24">
+        <div className="animate-pulse space-y-6">
+          <div className="h-6 w-48 bg-muted rounded" />
+          <div className="h-64 bg-muted rounded" />
+        </div>
+      </section>
+    );
+  }
+
+  if (articles.length === 0) return null;
+
   const main = articles[0];
   const rest = articles.slice(1);
+  const mainAuthor = main.author?.display_name || "Anonymous";
 
   return (
     <section className="container py-16 lg:py-24">
@@ -61,11 +44,10 @@ export default function FeaturedArticles() {
       </div>
 
       <div className="grid gap-8 lg:grid-cols-5">
-        {/* Main feature */}
         <article className="lg:col-span-3 group">
-          <Link to={`/article/${main.id}`} className="block overflow-hidden rounded">
+          <Link to={`/article/${main.slug}`} className="block overflow-hidden rounded">
             <img
-              src={main.image}
+              src={main.image_url || featuredImg}
               alt={main.title}
               className="aspect-[16/9] w-full object-cover transition-transform duration-700 group-hover:scale-105"
             />
@@ -75,7 +57,7 @@ export default function FeaturedArticles() {
               {main.category}
             </span>
             <h3 className="font-headline text-2xl font-bold leading-tight text-foreground lg:text-3xl">
-              <Link to={`/article/${main.id}`} className="hover:text-primary transition-colors">
+              <Link to={`/article/${main.slug}`} className="hover:text-primary transition-colors">
                 {main.title}
               </Link>
             </h3>
@@ -83,41 +65,49 @@ export default function FeaturedArticles() {
               {main.excerpt}
             </p>
             <div className="flex items-center gap-3 font-body text-xs text-muted-foreground">
-              <AuthorAvatar name={main.author} size="md" />
-              <span className="font-semibold text-foreground">{main.author}</span>
+              <AuthorAvatar name={mainAuthor} avatarUrl={main.author?.avatar_url} size="md" />
+              <span className="font-semibold text-foreground">{mainAuthor}</span>
               <span>·</span>
-              <span>{main.date}</span>
-              <span>·</span>
-              <span className="flex items-center gap-1">
-                <Clock className="h-3 w-3" />
-                {main.readTime}
-              </span>
+              <span>{new Date(main.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}</span>
+              {main.read_time && (
+                <>
+                  <span>·</span>
+                  <span className="flex items-center gap-1">
+                    <Clock className="h-3 w-3" />
+                    {main.read_time}
+                  </span>
+                </>
+              )}
             </div>
           </div>
         </article>
 
-        {/* Side articles */}
         <div className="lg:col-span-2 flex flex-col gap-8">
-          {rest.map((a) => (
-            <article key={a.id} className="group flex gap-4 border-b border-border pb-6 last:border-0">
-              <div className="flex-1 space-y-2">
-                <div className="flex items-center gap-2">
+          {rest.map((a) => {
+            const authorName = a.author?.display_name || "Anonymous";
+            return (
+              <article key={a.id} className="group flex gap-4 border-b border-border pb-6 last:border-0">
+                <div className="flex-1 space-y-2">
                   <span className="font-body text-xs font-semibold uppercase tracking-widest text-secondary">
                     {a.category}
                   </span>
+                  <h4 className="font-headline text-lg font-bold leading-snug text-foreground group-hover:text-primary transition-colors">
+                    <Link to={`/article/${a.slug}`}>{a.title}</Link>
+                  </h4>
+                  <div className="flex items-center gap-2 font-body text-xs text-muted-foreground">
+                    <AuthorAvatar name={authorName} avatarUrl={a.author?.avatar_url} size="sm" />
+                    <span className="font-semibold text-foreground">{authorName}</span>
+                    {a.read_time && (
+                      <>
+                        <span>·</span>
+                        <span>{a.read_time}</span>
+                      </>
+                    )}
+                  </div>
                 </div>
-                <h4 className="font-headline text-lg font-bold leading-snug text-foreground group-hover:text-primary transition-colors">
-                  <Link to={`/article/${a.id}`}>{a.title}</Link>
-                </h4>
-                <div className="flex items-center gap-2 font-body text-xs text-muted-foreground">
-                  <AuthorAvatar name={a.author} size="sm" />
-                  <span className="font-semibold text-foreground">{a.author}</span>
-                  <span>·</span>
-                  <span>{a.readTime}</span>
-                </div>
-              </div>
-            </article>
-          ))}
+              </article>
+            );
+          })}
         </div>
       </div>
     </section>
