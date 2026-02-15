@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { Calendar, User, ArrowRight } from "lucide-react";
+import { Calendar, ArrowRight } from "lucide-react";
+import AuthorAvatar from "@/components/AuthorAvatar";
 
 const categories = ["All", "Culture", "Heritage", "Community", "Literature"];
 
@@ -94,11 +95,9 @@ export default function BlogSection() {
               <p className="font-body text-sm leading-relaxed text-muted-foreground mb-4 line-clamp-3">
                 {post.excerpt}
               </p>
-              <div className="flex items-center gap-3 font-body text-xs text-muted-foreground">
-                <span className="flex items-center gap-1">
-                  <User className="h-3 w-3" />
-                  {post.author}
-                </span>
+              <div className="flex items-center gap-2 font-body text-xs text-muted-foreground">
+                <AuthorAvatar name={post.author} size="sm" />
+                <span className="font-semibold text-foreground">{post.author}</span>
                 <span>·</span>
                 <span className="flex items-center gap-1">
                   <Calendar className="h-3 w-3" />
