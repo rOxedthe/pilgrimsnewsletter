@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { PenLine, ArrowRight } from "lucide-react";
 import Navbar from "@/components/Navbar";
@@ -14,6 +15,7 @@ export default function AuthPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [displayName, setDisplayName] = useState("");
+  const [emailUpdates, setEmailUpdates] = useState(false);
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -35,7 +37,7 @@ export default function AuthPage() {
         email,
         password,
         options: {
-          data: { display_name: displayName },
+          data: { display_name: displayName, email_updates: emailUpdates },
           emailRedirectTo: window.location.origin,
         },
       });
@@ -114,9 +116,23 @@ export default function AuthPage() {
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
                 required
-                minLength={6}
+              minLength={6}
               />
             </div>
+
+            {!isLogin && (
+              <div className="flex items-start gap-3">
+                <Checkbox
+                  id="emailUpdates"
+                  checked={emailUpdates}
+                  onCheckedChange={(checked) => setEmailUpdates(checked === true)}
+                  className="mt-0.5"
+                />
+                <Label htmlFor="emailUpdates" className="font-body text-sm text-muted-foreground leading-snug cursor-pointer">
+                  Receive email updates when new stories and articles are published
+                </Label>
+              </div>
+            )}
 
             <Button type="submit" disabled={loading} className="w-full group">
               {loading ? "Please wait..." : isLogin ? "Sign In" : "Create Account"}
