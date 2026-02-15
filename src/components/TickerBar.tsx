@@ -1,4 +1,6 @@
-const items = [
+import { usePageContent } from "@/hooks/usePageContent";
+
+const defaultItems = [
   "📖 Just Added: 'The Snow Leopard' – First Edition",
   "🔔 Rare Find: Nepali Palm Leaf Manuscripts",
   "📚 New Arrival: 'Siddhartha' – Illustrated Collector's Edition",
@@ -7,6 +9,16 @@ const items = [
 ];
 
 export default function TickerBar() {
+  const { get } = usePageContent("/home");
+
+  const items = [
+    get("ticker_item_1", defaultItems[0]),
+    get("ticker_item_2", defaultItems[1]),
+    get("ticker_item_3", defaultItems[2]),
+    get("ticker_item_4", defaultItems[3]),
+    get("ticker_item_5", defaultItems[4]),
+  ].filter(Boolean);
+
   const doubled = [...items, ...items];
 
   return (
