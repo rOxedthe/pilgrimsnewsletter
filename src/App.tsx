@@ -21,6 +21,7 @@ import AdminArticles from "./pages/admin/AdminArticles";
 import AdminArticleEditor from "./pages/admin/AdminArticleEditor";
 import AdminPageContent from "./pages/admin/AdminPageContent";
 import AdminSeoSettings from "./pages/admin/AdminSeoSettings";
+import AdminUsers from "./pages/admin/AdminUsers";
 
 const queryClient = new QueryClient();
 
@@ -45,6 +46,7 @@ const App = () => (
               <Route path="articles" element={<AdminArticles />} />
               <Route path="articles/:id" element={<AdminArticleEditor />} />
               <Route path="content" element={<AdminPageContent />} />
+              <Route path="users" element={<AdminUsers />} />
               <Route path="seo" element={<AdminSeoSettings />} />
             </Route>
             <Route path="*" element={<NotFound />} />
