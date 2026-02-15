@@ -1,6 +1,7 @@
 import Navbar from "@/components/Navbar";
 import BookSidebar from "@/components/BookSidebar";
 import FooterSection from "@/components/FooterSection";
+import AuthorAvatar from "@/components/AuthorAvatar";
 import { Clock, Share2 } from "lucide-react";
 import featuredImg from "@/assets/featured-article.jpg";
 
@@ -38,6 +39,7 @@ export default function ArticlePage() {
           </h1>
 
           <div className="mt-5 flex flex-wrap items-center gap-4 border-b border-border pb-5 font-body text-sm text-muted-foreground">
+            <AuthorAvatar name="Dr. Tenzin Dorje" size="md" />
             <span className="font-semibold text-foreground">Dr. Tenzin Dorje</span>
             <span>·</span>
             <span>February 10, 2026</span>
@@ -73,9 +75,7 @@ export default function ArticlePage() {
           <div className="mt-12 rounded border border-border bg-cream-dark p-6">
             <h4 className="font-headline text-sm font-bold uppercase tracking-wider text-muted-foreground mb-3">About the Author</h4>
             <div className="flex items-start gap-4">
-              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-primary font-headline text-lg font-bold text-primary-foreground">
-                TD
-              </div>
+              <AuthorAvatar name="Dr. Tenzin Dorje" size="lg" />
               <div>
                 <p className="font-headline text-base font-bold text-foreground">Dr. Tenzin Dorje</p>
                 <p className="font-body text-sm text-muted-foreground leading-relaxed mt-1">

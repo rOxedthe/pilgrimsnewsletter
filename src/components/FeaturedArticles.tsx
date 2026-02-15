@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { Clock, ArrowRight } from "lucide-react";
+import AuthorAvatar from "@/components/AuthorAvatar";
 import featuredImg from "@/assets/featured-article.jpg";
 
 const articles = [
@@ -81,7 +82,8 @@ export default function FeaturedArticles() {
             <p className="font-body text-base leading-relaxed text-muted-foreground">
               {main.excerpt}
             </p>
-            <div className="flex items-center gap-4 font-body text-xs text-muted-foreground">
+            <div className="flex items-center gap-3 font-body text-xs text-muted-foreground">
+              <AuthorAvatar name={main.author} size="md" />
               <span className="font-semibold text-foreground">{main.author}</span>
               <span>·</span>
               <span>{main.date}</span>
@@ -107,7 +109,8 @@ export default function FeaturedArticles() {
                 <h4 className="font-headline text-lg font-bold leading-snug text-foreground group-hover:text-primary transition-colors">
                   <Link to={`/article/${a.id}`}>{a.title}</Link>
                 </h4>
-                <div className="flex items-center gap-3 font-body text-xs text-muted-foreground">
+                <div className="flex items-center gap-2 font-body text-xs text-muted-foreground">
+                  <AuthorAvatar name={a.author} size="sm" />
                   <span className="font-semibold text-foreground">{a.author}</span>
                   <span>·</span>
                   <span>{a.readTime}</span>
