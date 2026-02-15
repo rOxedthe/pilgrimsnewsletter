@@ -44,10 +44,10 @@ export default function Navbar() {
           </a>
           {user ? (
             <div className="flex items-center gap-3">
-              <span className="font-body text-xs text-muted-foreground flex items-center gap-1.5">
+              <Link to="/profile" className="font-body text-xs text-muted-foreground flex items-center gap-1.5 hover:text-foreground transition-colors">
                 <User className="h-3.5 w-3.5" />
                 {user.email?.split("@")[0]}
-              </span>
+              </Link>
               <Link
                 to="/settings"
                 className="inline-flex items-center gap-1.5 rounded border border-border px-3 py-1.5 font-body text-xs uppercase tracking-wider text-muted-foreground transition-colors hover:text-foreground hover:border-foreground"

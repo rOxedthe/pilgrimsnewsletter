@@ -10,6 +10,7 @@ import SubscribePage from "./pages/SubscribePage";
 import BlogPage from "./pages/BlogPage";
 import AuthPage from "./pages/AuthPage";
 import SettingsPage from "./pages/SettingsPage";
+import ProfilePage from "./pages/ProfilePage";
 import NotFound from "./pages/NotFound";
 import CookieConsent from "./components/CookieConsent";
 
@@ -29,6 +30,7 @@ const App = () => (
             <Route path="/subscribe" element={<SubscribePage />} />
             <Route path="/auth" element={<AuthPage />} />
             <Route path="/settings" element={<SettingsPage />} />
+            <Route path="/profile" element={<ProfilePage />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
           <CookieConsent />
