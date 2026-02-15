@@ -52,7 +52,7 @@ export default function BlogSection() {
               From the Blog
             </span>
             <h2 className="font-headline text-3xl font-bold text-foreground mt-1">
-              Stories & Insights
+              This Week's Story & Insights
             </h2>
           </div>
           <Link
