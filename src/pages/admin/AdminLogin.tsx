@@ -8,7 +8,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Shield, ArrowRight } from "lucide-react";
 
 export default function AdminLogin() {
-  const [email, setEmail] = useState("");
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
@@ -18,6 +18,7 @@ export default function AdminLogin() {
     e.preventDefault();
     setLoading(true);
 
+    const email = `${username.toLowerCase().trim()}@pilgrimsnewsletter.com`;
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) {
       toast({ title: "Login failed", description: error.message, variant: "destructive" });
@@ -54,8 +55,8 @@ export default function AdminLogin() {
 
         <form onSubmit={handleSubmit} className="space-y-4 rounded border border-border bg-card p-6">
           <div className="space-y-2">
-            <Label htmlFor="email" className="font-body text-xs uppercase tracking-wider text-muted-foreground">Email</Label>
-            <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+            <Label htmlFor="username" className="font-body text-xs uppercase tracking-wider text-muted-foreground">Username</Label>
+            <Input id="username" type="text" value={username} onChange={(e) => setUsername(e.target.value)} placeholder="admin" required />
           </div>
           <div className="space-y-2">
             <Label htmlFor="password" className="font-body text-xs uppercase tracking-wider text-muted-foreground">Password</Label>
