@@ -5,12 +5,6 @@ import { usePageContent } from "@/hooks/usePageContent";
 export default function HeroSection() {
   const { get } = usePageContent("/home");
 
-  const stats = [
-    { num: get("hero_stat_1_num", "40+"), label: get("hero_stat_1_label", "Years") },
-    { num: get("hero_stat_2_num", "50K+"), label: get("hero_stat_2_label", "Rare Titles") },
-    { num: get("hero_stat_3_num", "120+"), label: get("hero_stat_3_label", "Countries") },
-  ];
-
   return (
     <section className="relative overflow-hidden bg-background">
       {/* Decorative elements */}
@@ -30,8 +24,8 @@ export default function HeroSection() {
       <div className="absolute top-10 right-10 w-72 h-72 rounded-full bg-secondary/10 blur-3xl" />
       <div className="absolute bottom-10 left-10 w-96 h-96 rounded-full bg-gold/5 blur-3xl" />
 
-      <div className="container relative z-10 grid min-h-[75vh] grid-cols-1 items-center gap-12 py-20 lg:grid-cols-2">
-        <div className="space-y-8 animate-fade-in">
+      <div className="container relative z-10 flex min-h-[75vh] items-center py-20">
+        <div className="max-w-2xl space-y-8 animate-fade-in">
           <h1 className="font-headline text-4xl font-bold leading-tight text-foreground sm:text-5xl lg:text-6xl text-balance">
             {get("hero_title_line1", "Where Ancient Wisdom")}
             <br />
@@ -64,23 +58,6 @@ export default function HeroSection() {
           </div>
         </div>
 
-        <div className="hidden lg:flex flex-col items-end gap-6 animate-fade-in-up" style={{ animationDelay: "0.3s" }}>
-          <div className="space-y-6 rounded border border-foreground/20 bg-foreground/5 p-8 backdrop-blur-md">
-            <p className="font-headline text-lg italic text-muted-foreground">
-              "{get("hero_quote", "The only bookshop in Asia where every shelf is a pilgrimage.")}"
-            </p>
-            <div className="grid grid-cols-3 gap-6 border-t border-foreground/20 pt-6">
-              {stats.map((s) => (
-                <div key={s.label} className="text-center">
-                  <div className="font-headline text-3xl font-bold text-foreground">{s.num}</div>
-                  <div className="font-body text-xs uppercase tracking-wider text-muted-foreground">
-                    {s.label}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
       </div>
     </section>
   );
