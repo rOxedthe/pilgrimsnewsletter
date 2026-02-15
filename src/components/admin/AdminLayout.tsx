@@ -1,12 +1,13 @@
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { LayoutDashboard, FileText, Globe, Settings, LogOut, Users } from "lucide-react";
+import { LayoutDashboard, FileText, Globe, Settings, LogOut, Users, BookImage } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 const navItems = [
   { to: "/admin", icon: LayoutDashboard, label: "Dashboard", end: true },
   { to: "/admin/articles", icon: FileText, label: "Articles", end: false },
+  { to: "/admin/blog", icon: BookImage, label: "Blog Posts", end: false },
   { to: "/admin/users", icon: Users, label: "Users", end: false },
   { to: "/admin/content", icon: Globe, label: "Site Content", end: false },
   { to: "/admin/seo", icon: Settings, label: "SEO Settings", end: false },

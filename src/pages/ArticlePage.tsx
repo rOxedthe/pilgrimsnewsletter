@@ -3,6 +3,7 @@ import Navbar from "@/components/Navbar";
 import BookSidebar from "@/components/BookSidebar";
 import FooterSection from "@/components/FooterSection";
 import AuthorAvatar from "@/components/AuthorAvatar";
+import ArticleComments from "@/components/ArticleComments";
 import { useArticleBySlug } from "@/hooks/useArticles";
 import { Clock, Share2 } from "lucide-react";
 import featuredImg from "@/assets/featured-article.jpg";
@@ -89,6 +90,8 @@ export default function ArticlePage() {
                   </div>
                 </div>
               )}
+
+              <ArticleComments articleId={article.id} />
             </article>
 
             <div className="hidden lg:block sticky top-20 self-start">
