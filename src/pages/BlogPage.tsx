@@ -2,81 +2,15 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Calendar } from "lucide-react";
 import AuthorAvatar from "@/components/AuthorAvatar";
+import { useArticles } from "@/hooks/useArticles";
 import Navbar from "@/components/Navbar";
 import FooterSection from "@/components/FooterSection";
 
 const categories = ["All", "Culture", "Heritage", "Community", "Literature", "Philosophy", "Science", "Collections"];
 
-const allPosts = [
-  {
-    id: "thamel-bookshops",
-    title: "A Walking Tour of Thamel's Hidden Bookshops",
-    excerpt: "Beyond the tourist bustle lies a network of quiet literary havens that have shaped generations of travelers and thinkers.",
-    author: "Sita Thapa",
-    date: "Feb 12, 2026",
-    category: "Culture",
-  },
-  {
-    id: "printing-press-nepal",
-    title: "The Revival of Nepal's Woodblock Printing Tradition",
-    excerpt: "A new generation of artisans is breathing life into ancient printing techniques, creating works that bridge centuries.",
-    author: "Kamal Adhikari",
-    date: "Feb 9, 2026",
-    category: "Heritage",
-  },
-  {
-    id: "reading-habits",
-    title: "How Himalayan Communities Are Building Reading Cultures",
-    excerpt: "From mobile libraries on mule-back to community reading rooms, literacy initiatives are transforming remote villages.",
-    author: "Anita Gurung",
-    date: "Feb 5, 2026",
-    category: "Community",
-  },
-  {
-    id: "translation-movement",
-    title: "Translating the Untranslatable: Nepal's Literary Bridge Builders",
-    excerpt: "Meet the translators making Nepali and Tibetan literature accessible to the world for the first time.",
-    author: "Bibek Sharma",
-    date: "Feb 1, 2026",
-    category: "Literature",
-  },
-  {
-    id: "himalayan-wisdom",
-    title: "The Lost Libraries of Mustang: A Journey Through Forbidden Knowledge",
-    excerpt: "Deep within the former kingdom of Lo lies a trove of manuscripts that could reshape our understanding of Tibetan Buddhism.",
-    author: "Dr. Tenzin Dorje",
-    date: "Feb 10, 2026",
-    category: "Philosophy",
-  },
-  {
-    id: "meditation-science",
-    title: "The Neuroscience of Himalayan Meditation: What 1,000 Hours of Silence Reveals",
-    excerpt: "Recent studies at Kathmandu University have produced startling results about the effects of prolonged silent retreat on neural plasticity.",
-    author: "Maya Shakya",
-    date: "Feb 6, 2026",
-    category: "Science",
-  },
-  {
-    id: "rare-books",
-    title: "First Editions Worth a Fortune: The Hidden Market of Himalayan Bibliophilia",
-    excerpt: "From hand-printed Tibetan woodblock texts to Victorian-era expedition journals, the rare book market of the Himalayan region is booming.",
-    author: "Rajesh Hamal",
-    date: "Feb 2, 2026",
-    category: "Collections",
-  },
-  {
-    id: "kathmandu-poetry",
-    title: "The Poetry Slams of Kathmandu: A New Literary Movement",
-    excerpt: "Young poets are fusing Nepali verse with hip-hop rhythms, creating a vibrant spoken-word scene in the capital's cafés.",
-    author: "Priya Maharjan",
-    date: "Jan 28, 2026",
-    category: "Culture",
-  },
-];
-
 export default function BlogPage() {
   const [active, setActive] = useState("All");
-  const filtered = active === "All" ? allPosts : allPosts.filter((p) => p.category === active);
+  const { data: posts = [], isLoading } = useArticles({ category: active });
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
@@ -108,35 +42,51 @@ export default function BlogPage() {
             ))}
           </div>
 
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {filtered.map((post) => (
-              <article
-                key={post.id}
-                className="group rounded border border-border bg-card p-6 transition-all hover:shadow-lg hover:-translate-y-1"
-              >
-                <span className="inline-block font-body text-xs font-semibold uppercase tracking-widest text-secondary mb-3">
-                  {post.category}
-                </span>
-                <h3 className="font-headline text-lg font-bold leading-snug text-foreground mb-2 group-hover:text-secondary transition-colors">
-                  <Link to={`/article/${post.id}`}>{post.title}</Link>
-                </h3>
-                <p className="font-body text-sm leading-relaxed text-muted-foreground mb-4 line-clamp-3">
-                  {post.excerpt}
-                </p>
-                <div className="flex items-center gap-2 font-body text-xs text-muted-foreground">
-                  <AuthorAvatar name={post.author} size="sm" />
-                  <span className="font-semibold text-foreground">{post.author}</span>
-                  <span>·</span>
-                  <span className="flex items-center gap-1">
-                    <Calendar className="h-3 w-3" />
-                    {post.date}
-                  </span>
+          {isLoading ? (
+            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+              {[1, 2, 3, 4, 5, 6].map((i) => (
+                <div key={i} className="rounded border border-border bg-card p-6 animate-pulse">
+                  <div className="h-3 w-16 bg-muted rounded mb-3" />
+                  <div className="h-5 w-full bg-muted rounded mb-2" />
+                  <div className="h-4 w-3/4 bg-muted rounded mb-4" />
+                  <div className="h-3 w-1/2 bg-muted rounded" />
                 </div>
-              </article>
-            ))}
-          </div>
+              ))}
+            </div>
+          ) : (
+            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+              {posts.map((post) => {
+                const authorName = post.author?.display_name || "Anonymous";
+                return (
+                  <article
+                    key={post.id}
+                    className="group rounded border border-border bg-card p-6 transition-all hover:shadow-lg hover:-translate-y-1"
+                  >
+                    <span className="inline-block font-body text-xs font-semibold uppercase tracking-widest text-secondary mb-3">
+                      {post.category}
+                    </span>
+                    <h3 className="font-headline text-lg font-bold leading-snug text-foreground mb-2 group-hover:text-secondary transition-colors">
+                      <Link to={`/article/${post.slug}`}>{post.title}</Link>
+                    </h3>
+                    <p className="font-body text-sm leading-relaxed text-muted-foreground mb-4 line-clamp-3">
+                      {post.excerpt}
+                    </p>
+                    <div className="flex items-center gap-2 font-body text-xs text-muted-foreground">
+                      <AuthorAvatar name={authorName} avatarUrl={post.author?.avatar_url} size="sm" />
+                      <span className="font-semibold text-foreground">{authorName}</span>
+                      <span>·</span>
+                      <span className="flex items-center gap-1">
+                        <Calendar className="h-3 w-3" />
+                        {new Date(post.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+                      </span>
+                    </div>
+                  </article>
+                );
+              })}
+            </div>
+          )}
 
-          {filtered.length === 0 && (
+          {!isLoading && posts.length === 0 && (
             <p className="py-12 text-center font-body text-muted-foreground">
               No articles in this category yet.
             </p>

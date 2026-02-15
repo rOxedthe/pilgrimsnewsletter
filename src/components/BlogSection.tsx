@@ -2,47 +2,16 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Calendar, ArrowRight } from "lucide-react";
 import AuthorAvatar from "@/components/AuthorAvatar";
+import { useArticles } from "@/hooks/useArticles";
 
 const categories = ["All", "Culture", "Heritage", "Community", "Literature"];
 
-const blogPosts = [
-  {
-    id: "thamel-bookshops",
-    title: "A Walking Tour of Thamel's Hidden Bookshops",
-    excerpt: "Beyond the tourist bustle lies a network of quiet literary havens that have shaped generations of travelers and thinkers.",
-    author: "Sita Thapa",
-    date: "Feb 12, 2026",
-    category: "Culture",
-  },
-  {
-    id: "printing-press-nepal",
-    title: "The Revival of Nepal's Woodblock Printing Tradition",
-    excerpt: "A new generation of artisans is breathing life into ancient printing techniques, creating works that bridge centuries.",
-    author: "Kamal Adhikari",
-    date: "Feb 9, 2026",
-    category: "Heritage",
-  },
-  {
-    id: "reading-habits",
-    title: "How Himalayan Communities Are Building Reading Cultures",
-    excerpt: "From mobile libraries on mule-back to community reading rooms, literacy initiatives are transforming remote villages.",
-    author: "Anita Gurung",
-    date: "Feb 5, 2026",
-    category: "Community",
-  },
-  {
-    id: "translation-movement",
-    title: "Translating the Untranslatable: Nepal's Literary Bridge Builders",
-    excerpt: "Meet the translators making Nepali and Tibetan literature accessible to the world for the first time.",
-    author: "Bibek Sharma",
-    date: "Feb 1, 2026",
-    category: "Literature",
-  },
-];
-
 export default function BlogSection() {
   const [active, setActive] = useState("All");
-  const filtered = active === "All" ? blogPosts : blogPosts.filter((p) => p.category === active);
+  const { data: posts = [], isLoading } = useArticles({
+    category: active,
+    limit: 4,
+  });
 
   return (
     <section className="bg-muted/50 py-16 lg:py-24">
@@ -80,33 +49,53 @@ export default function BlogSection() {
           ))}
         </div>
 
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-          {filtered.map((post) => (
-            <article
-              key={post.id}
-              className="group rounded border border-border bg-card p-6 transition-all hover:shadow-lg hover:-translate-y-1"
-            >
-              <span className="inline-block font-body text-xs font-semibold uppercase tracking-widest text-secondary mb-3">
-                {post.category}
-              </span>
-              <h3 className="font-headline text-lg font-bold leading-snug text-foreground mb-2 group-hover:text-secondary transition-colors">
-                <Link to={`/article/${post.id}`}>{post.title}</Link>
-              </h3>
-              <p className="font-body text-sm leading-relaxed text-muted-foreground mb-4 line-clamp-3">
-                {post.excerpt}
-              </p>
-              <div className="flex items-center gap-2 font-body text-xs text-muted-foreground">
-                <AuthorAvatar name={post.author} size="sm" />
-                <span className="font-semibold text-foreground">{post.author}</span>
-                <span>·</span>
-                <span className="flex items-center gap-1">
-                  <Calendar className="h-3 w-3" />
-                  {post.date}
-                </span>
+        {isLoading ? (
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+            {[1, 2, 3, 4].map((i) => (
+              <div key={i} className="rounded border border-border bg-card p-6 animate-pulse">
+                <div className="h-3 w-16 bg-muted rounded mb-3" />
+                <div className="h-5 w-full bg-muted rounded mb-2" />
+                <div className="h-4 w-3/4 bg-muted rounded mb-4" />
+                <div className="h-3 w-1/2 bg-muted rounded" />
               </div>
-            </article>
-          ))}
-        </div>
+            ))}
+          </div>
+        ) : (
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+            {posts.map((post) => {
+              const authorName = post.author?.display_name || "Anonymous";
+              return (
+                <article
+                  key={post.id}
+                  className="group rounded border border-border bg-card p-6 transition-all hover:shadow-lg hover:-translate-y-1"
+                >
+                  <span className="inline-block font-body text-xs font-semibold uppercase tracking-widest text-secondary mb-3">
+                    {post.category}
+                  </span>
+                  <h3 className="font-headline text-lg font-bold leading-snug text-foreground mb-2 group-hover:text-secondary transition-colors">
+                    <Link to={`/article/${post.slug}`}>{post.title}</Link>
+                  </h3>
+                  <p className="font-body text-sm leading-relaxed text-muted-foreground mb-4 line-clamp-3">
+                    {post.excerpt}
+                  </p>
+                  <div className="flex items-center gap-2 font-body text-xs text-muted-foreground">
+                    <AuthorAvatar name={authorName} avatarUrl={post.author?.avatar_url} size="sm" />
+                    <span className="font-semibold text-foreground">{authorName}</span>
+                    <span>·</span>
+                    <span className="flex items-center gap-1">
+                      <Calendar className="h-3 w-3" />
+                      {new Date(post.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+                    </span>
+                  </div>
+                </article>
+              );
+            })}
+          </div>
+        )}
+
+        {!isLoading && posts.length === 0 && (
+          <p className="py-12 text-center font-body text-muted-foreground">No articles in this category yet.</p>
+        )}
       </div>
     </section>
   );
