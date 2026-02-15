@@ -1,20 +1,17 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
-import { useEditor, EditorContent } from "@tiptap/react";
-import StarterKit from "@tiptap/starter-kit";
-import ImageExtension from "@tiptap/extension-image";
-import LinkExtension from "@tiptap/extension-link";
-import Placeholder from "@tiptap/extension-placeholder";
+import { Editor } from "@tiptap/react";
+import RichTextEditor from "@/components/admin/RichTextEditor";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
-import { ArrowLeft, Save, Bold, Italic, List, ListOrdered, Heading2, Link as LinkIcon, Image, Undo, Redo, Quote } from "lucide-react";
+import { ArrowLeft, Save } from "lucide-react";
 import { z } from "zod";
 
 const articleSchema = z.object({
@@ -42,18 +39,8 @@ export default function AdminArticleEditor() {
     published: false, featured: false,
     meta_title: "", meta_description: "", meta_keywords: "",
   });
-
-  const editor = useEditor({
-    extensions: [
-      StarterKit,
-      ImageExtension,
-      LinkExtension.configure({ openOnClick: false }),
-      Placeholder.configure({ placeholder: "Start writing your article..." }),
-    ],
-    editorProps: {
-      attributes: { class: "prose prose-sm max-w-none min-h-[300px] p-4 focus:outline-none" },
-    },
-  });
+  const editorInstanceRef = useRef<Editor | null>(null);
+  const [articleContent, setArticleContent] = useState("");
 
   const { data: article, isLoading } = useQuery({
     queryKey: ["admin-article", id],
@@ -77,9 +64,10 @@ export default function AdminArticleEditor() {
         meta_description: (article as any).meta_description ?? "",
         meta_keywords: (article as any).meta_keywords ?? "",
       });
-      editor?.commands.setContent(article.content ?? "");
+      setArticleContent(article.content ?? "");
+      editorInstanceRef.current?.commands.setContent(article.content ?? "");
     }
-  }, [article, editor]);
+  }, [article]);
 
   const generateSlug = useCallback((title: string) => {
     return title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
@@ -88,7 +76,7 @@ export default function AdminArticleEditor() {
   const saveMutation = useMutation({
     mutationFn: async () => {
       articleSchema.parse(form);
-      const content = editor?.getHTML() ?? "";
+      const content = editorInstanceRef.current?.getHTML() ?? articleContent;
 
       // Get author profile id
       const { data: profile } = await supabase
@@ -135,15 +123,6 @@ export default function AdminArticleEditor() {
 
   const setField = (key: string, value: any) => setForm((prev) => ({ ...prev, [key]: value }));
 
-  const addLink = () => {
-    const url = window.prompt("URL:");
-    if (url) editor?.chain().focus().setLink({ href: url }).run();
-  };
-  const addImage = () => {
-    const url = window.prompt("Image URL:");
-    if (url) editor?.chain().focus().setImage({ src: url }).run();
-  };
-
   if (isLoading) return <p className="text-muted-foreground">Loading...</p>;
 
   return (
@@ -183,25 +162,12 @@ export default function AdminArticleEditor() {
             <Input value={form.slug} onChange={(e) => setField("slug", e.target.value)} placeholder="article-slug" />
           </div>
 
-          {/* Toolbar */}
-          <div className="flex flex-wrap gap-1 rounded border border-border bg-muted/30 p-1">
-            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => editor?.chain().focus().toggleBold().run()} data-active={editor?.isActive("bold")}><Bold className="h-4 w-4" /></Button>
-            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => editor?.chain().focus().toggleItalic().run()}><Italic className="h-4 w-4" /></Button>
-            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => editor?.chain().focus().toggleHeading({ level: 2 }).run()}><Heading2 className="h-4 w-4" /></Button>
-            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => editor?.chain().focus().toggleBulletList().run()}><List className="h-4 w-4" /></Button>
-            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => editor?.chain().focus().toggleOrderedList().run()}><ListOrdered className="h-4 w-4" /></Button>
-            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => editor?.chain().focus().toggleBlockquote().run()}><Quote className="h-4 w-4" /></Button>
-            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={addLink}><LinkIcon className="h-4 w-4" /></Button>
-            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={addImage}><Image className="h-4 w-4" /></Button>
-            <div className="ml-auto flex gap-1">
-              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => editor?.chain().focus().undo().run()}><Undo className="h-4 w-4" /></Button>
-              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => editor?.chain().focus().redo().run()}><Redo className="h-4 w-4" /></Button>
-            </div>
-          </div>
-
-          <div className="rounded border border-border bg-card">
-            <EditorContent editor={editor} />
-          </div>
+          <RichTextEditor
+            content={articleContent}
+            onChange={(html) => setArticleContent(html)}
+            editorRef={(e) => { editorInstanceRef.current = e; }}
+            placeholder="Start writing your article..."
+          />
         </div>
 
         {/* Sidebar */}
