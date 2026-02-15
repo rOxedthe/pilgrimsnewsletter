@@ -142,3 +142,33 @@
     text-wrap: balance;
   }
 }
+
+/* Tiptap editor styles */
+.tiptap {
+  outline: none;
+}
+.tiptap p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  float: left;
+  color: hsl(var(--muted-foreground));
+  pointer-events: none;
+  height: 0;
+}
+.tiptap h1, .tiptap h2, .tiptap h3 {
+  font-family: 'Playfair Display', serif;
+  font-weight: 700;
+  margin: 1em 0 0.5em;
+}
+.tiptap h2 { font-size: 1.5em; }
+.tiptap h3 { font-size: 1.25em; }
+.tiptap ul, .tiptap ol { padding-left: 1.5em; margin: 0.5em 0; }
+.tiptap ul { list-style: disc; }
+.tiptap ol { list-style: decimal; }
+.tiptap blockquote {
+  border-left: 3px solid hsl(var(--border));
+  padding-left: 1em;
+  margin: 1em 0;
+  color: hsl(var(--muted-foreground));
+}
+.tiptap img { max-width: 100%; border-radius: 0.25rem; margin: 1em 0; }
+.tiptap a { color: hsl(var(--secondary)); text-decoration: underline; }
