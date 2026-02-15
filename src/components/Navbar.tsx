@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Menu, X, LogIn, LogOut, User } from "lucide-react";
-import DeleteAccountDialog from "@/components/DeleteAccountDialog";
+import { Menu, X, LogIn, LogOut, User, Settings } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import logo from "@/assets/logo.png";
 
@@ -49,6 +48,12 @@ export default function Navbar() {
                 <User className="h-3.5 w-3.5" />
                 {user.email?.split("@")[0]}
               </span>
+              <Link
+                to="/settings"
+                className="inline-flex items-center gap-1.5 rounded border border-border px-3 py-1.5 font-body text-xs uppercase tracking-wider text-muted-foreground transition-colors hover:text-foreground hover:border-foreground"
+              >
+                <Settings className="h-3.5 w-3.5" />
+              </Link>
               <button
                 onClick={signOut}
                 className="inline-flex items-center gap-1.5 rounded border border-border px-3 py-1.5 font-body text-xs uppercase tracking-wider text-muted-foreground transition-colors hover:text-foreground hover:border-foreground"
@@ -56,7 +61,6 @@ export default function Navbar() {
                 <LogOut className="h-3.5 w-3.5" />
                 Sign Out
               </button>
-              <DeleteAccountDialog />
             </div>
           ) : (
             <Link
@@ -87,10 +91,12 @@ export default function Navbar() {
             </a>
             {user ? (
               <>
+                <Link to="/settings" onClick={() => setOpen(false)} className="inline-flex w-fit items-center gap-1.5 font-body text-sm uppercase tracking-wide text-muted-foreground hover:text-primary">
+                  <Settings className="h-4 w-4" /> Settings
+                </Link>
                 <button onClick={() => { signOut(); setOpen(false); }} className="inline-flex w-fit items-center gap-1.5 font-body text-sm uppercase tracking-wide text-muted-foreground hover:text-primary">
                   <LogOut className="h-4 w-4" /> Sign Out
                 </button>
-                <DeleteAccountDialog />
               </>
             ) : (
               <Link to="/auth" onClick={() => setOpen(false)} className="inline-flex w-fit items-center gap-1.5 font-body text-sm uppercase tracking-wide text-muted-foreground hover:text-primary">
