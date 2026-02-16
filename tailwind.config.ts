@@ -64,6 +64,10 @@ export default {
           DEFAULT: "hsl(var(--cream))",
           dark: "hsl(var(--cream-dark))",
         },
+        editorial: {
+          DEFAULT: "hsl(var(--editorial))",
+          foreground: "hsl(var(--editorial-foreground))",
+        },
         sidebar: {
           DEFAULT: "hsl(var(--sidebar-background))",
           foreground: "hsl(var(--sidebar-foreground))",

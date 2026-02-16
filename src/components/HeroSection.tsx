@@ -1,63 +1,122 @@
 import { Link } from "react-router-dom";
-import { ArrowRight, ShoppingBag } from "lucide-react";
-import { usePageContent } from "@/hooks/usePageContent";
+import { useArticles } from "@/hooks/useArticles";
+import AuthorAvatar from "@/components/AuthorAvatar";
+import featuredImg from "@/assets/featured-article.jpg";
 
 export default function HeroSection() {
-  const { get } = usePageContent("/home");
+  const { data: featured = [], isLoading } = useArticles({ featured: true, limit: 3 });
+  const { data: latest = [] } = useArticles({ limit: 4 });
 
-  return (
-    <section className="relative overflow-hidden bg-background">
-      {/* Decorative elements */}
-      <div className="absolute inset-0 opacity-[0.03]">
-        <div className="absolute top-0 left-0 w-full h-full"
-          style={{
-            backgroundImage: `repeating-linear-gradient(
-              0deg, transparent, transparent 60px,
-              hsl(var(--foreground)) 60px, hsl(var(--foreground)) 61px
-            ), repeating-linear-gradient(
-              90deg, transparent, transparent 60px,
-              hsl(var(--foreground)) 60px, hsl(var(--foreground)) 61px
-            )`,
-          }}
-        />
-      </div>
-      <div className="absolute top-10 right-10 w-72 h-72 rounded-full bg-secondary/10 blur-3xl" />
-      <div className="absolute bottom-10 left-10 w-96 h-96 rounded-full bg-gold/5 blur-3xl" />
-
-      <div className="container relative z-10 flex min-h-[75vh] items-center py-20">
-        <div className="max-w-2xl space-y-8 animate-fade-in">
-          <h1 className="font-headline text-4xl font-bold leading-tight text-foreground sm:text-5xl lg:text-6xl text-balance">
-            {get("hero_title_line1", "Where Ancient Wisdom")}
-            <br />
-            <span className="italic text-secondary">
-              {get("hero_title_line2", "Meets the Modern Mind")}
-            </span>
-          </h1>
-
-          <p className="max-w-lg font-body text-lg leading-relaxed text-muted-foreground">
-            {get("hero_description", "Deep essays on Himalayan philosophy, rare book discoveries, and the timeless art of mindful reading — curated from Asia's most legendary bookstore.")}
-          </p>
-
-          <div className="flex flex-wrap gap-4">
-            <Link
-              to={get("hero_cta_primary_link", "/subscribe")}
-              className="group inline-flex items-center gap-2 rounded bg-foreground px-6 py-3 font-body text-sm font-semibold uppercase tracking-wider text-background transition-all hover:opacity-90"
-            >
-              {get("hero_cta_primary_text", "Publish With Us")}
-              <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
-            </Link>
-            <a
-              href={get("hero_cta_secondary_link", "https://pilgrimsonline.com")}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="group inline-flex items-center gap-2 rounded border border-foreground/30 px-6 py-3 font-body text-sm font-semibold uppercase tracking-wider text-foreground transition-all hover:bg-foreground/10"
-            >
-              <ShoppingBag className="h-4 w-4" />
-              {get("hero_cta_secondary_text", "Curated Collections")}
-            </a>
+  if (isLoading) {
+    return (
+      <section className="container py-10 lg:py-16">
+        <div className="grid gap-6 lg:grid-cols-[1fr_340px_260px] animate-pulse">
+          <div className="aspect-[4/3] bg-muted rounded" />
+          <div className="space-y-4">
+            <div className="h-40 bg-muted rounded" />
+            <div className="h-40 bg-muted rounded" />
+          </div>
+          <div className="space-y-3">
+            <div className="h-6 w-24 bg-muted rounded" />
+            <div className="h-16 bg-muted rounded" />
+            <div className="h-16 bg-muted rounded" />
           </div>
         </div>
+      </section>
+    );
+  }
 
+  const main = featured[0];
+  const secondary = featured.slice(1, 3);
+  // Filter out duplicates from latest
+  const featuredIds = new Set(featured.map((a) => a.id));
+  const latestFiltered = latest.filter((a) => !featuredIds.has(a.id)).slice(0, 4);
+
+  if (!main) return null;
+
+  const mainAuthor = main.author?.display_name || "Anonymous";
+
+  return (
+    <section className="border-b border-border">
+      <div className="container py-8 lg:py-12">
+        <div className="grid gap-8 lg:grid-cols-[1fr_320px_240px]">
+          {/* Main featured article — large image with title below */}
+          <article className="group">
+            <Link to={`/article/${main.slug}`} className="block overflow-hidden rounded">
+              <img
+                src={main.image_url || featuredImg}
+                alt={main.title}
+                className="aspect-[4/3] w-full object-cover transition-transform duration-700 group-hover:scale-[1.02]"
+              />
+            </Link>
+            <div className="mt-4 space-y-2">
+              <span className="font-body text-xs font-bold uppercase tracking-widest text-editorial">
+                {main.category}
+              </span>
+              <h1 className="font-headline text-2xl font-bold leading-tight text-foreground lg:text-3xl text-balance">
+                <Link to={`/article/${main.slug}`} className="hover:underline decoration-1 underline-offset-4">
+                  {main.title}
+                </Link>
+              </h1>
+              <p className="font-body text-sm leading-relaxed text-muted-foreground line-clamp-3">
+                {main.excerpt}
+              </p>
+              <p className="font-body text-xs text-muted-foreground">{mainAuthor}</p>
+            </div>
+          </article>
+
+          {/* Secondary articles — image + category + headline + excerpt */}
+          <div className="flex flex-col gap-6">
+            {secondary.map((a) => {
+              const author = a.author?.display_name || "Anonymous";
+              return (
+                <article key={a.id} className="group">
+                  <Link to={`/article/${a.slug}`} className="block overflow-hidden rounded">
+                    <img
+                      src={a.image_url || featuredImg}
+                      alt={a.title}
+                      className="aspect-[16/9] w-full object-cover transition-transform duration-500 group-hover:scale-[1.02]"
+                    />
+                  </Link>
+                  <div className="mt-3 space-y-1.5">
+                    <span className="font-body text-xs font-bold uppercase tracking-widest text-editorial">
+                      {a.category}
+                    </span>
+                    <h3 className="font-headline text-lg font-bold leading-snug text-foreground">
+                      <Link to={`/article/${a.slug}`} className="hover:underline decoration-1 underline-offset-4">
+                        {a.title}
+                      </Link>
+                    </h3>
+                    <p className="font-body text-sm text-muted-foreground line-clamp-2">
+                      {a.excerpt}
+                    </p>
+                    <p className="font-body text-xs text-muted-foreground">{author}</p>
+                  </div>
+                </article>
+              );
+            })}
+          </div>
+
+          {/* The Latest sidebar — headline-only list */}
+          <aside className="hidden lg:block">
+            <h2 className="font-headline text-lg font-bold text-foreground mb-4 pb-2 border-b-2 border-editorial">
+              The Latest
+            </h2>
+            <div className="flex flex-col divide-y divide-border">
+              {latestFiltered.map((a) => {
+                const author = a.author?.display_name || "Anonymous";
+                return (
+                  <article key={a.id} className="py-4 first:pt-0">
+                    <h4 className="font-headline text-base font-bold leading-snug text-foreground hover:underline decoration-1 underline-offset-4">
+                      <Link to={`/article/${a.slug}`}>{a.title}</Link>
+                    </h4>
+                    <p className="font-body text-xs text-muted-foreground mt-1.5">{author}</p>
+                  </article>
+                );
+              })}
+            </div>
+          </aside>
+        </div>
       </div>
     </section>
   );
