@@ -53,15 +53,15 @@ export default function BlogListPage() {
             </p>
           </div>
 
-          <div className="mb-8 flex flex-wrap gap-2 border-b border-border pb-6">
+          <div className="mb-8 flex flex-wrap gap-2 border-b border-border pb-4">
             {categories.map((cat) => (
               <button
                 key={cat}
                 onClick={() => setActive(cat)}
-                className={`rounded-full px-4 py-1.5 font-body text-xs font-semibold uppercase tracking-wider transition-colors ${
+                className={`px-4 py-1.5 font-body text-xs font-semibold uppercase tracking-wider transition-colors ${
                   active === cat
-                    ? "bg-primary text-primary-foreground"
-                    : "bg-muted text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                    ? "border-b-2 border-editorial text-foreground"
+                    : "text-muted-foreground hover:text-foreground"
                 }`}
               >
                 {cat}
@@ -70,55 +70,53 @@ export default function BlogListPage() {
           </div>
 
           {isLoading ? (
-            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
               {[1, 2, 3].map((i) => (
-                <div key={i} className="animate-pulse rounded border border-border bg-card overflow-hidden">
-                  <div className="h-48 bg-muted" />
-                  <div className="p-5 space-y-2">
-                    <div className="h-3 w-16 bg-muted rounded" />
-                    <div className="h-5 w-full bg-muted rounded" />
-                    <div className="h-4 w-3/4 bg-muted rounded" />
-                  </div>
+                <div key={i} className="animate-pulse space-y-3">
+                  <div className="aspect-[3/4] bg-muted rounded" />
+                  <div className="h-3 w-24 bg-muted rounded" />
+                  <div className="h-5 w-full bg-muted rounded" />
                 </div>
               ))}
             </div>
           ) : posts.length === 0 ? (
             <p className="py-12 text-center font-body text-muted-foreground">No blog posts in this category yet.</p>
           ) : (
-            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
               {posts.map((post) => (
                 <Link
                   key={post.id}
                   to={`/blog/${post.slug}`}
-                  className="group rounded border border-border bg-card overflow-hidden transition-all hover:shadow-lg hover:-translate-y-1"
+                  className="group"
                 >
-                  {post.cover_image ? (
-                    <div className="h-48 overflow-hidden">
+                  {/* Tall thumbnail card like the reference */}
+                  <div className="overflow-hidden rounded-lg shadow-sm transition-all group-hover:shadow-lg group-hover:-translate-y-1">
+                    {post.cover_image ? (
                       <img
                         src={post.cover_image}
                         alt={post.title}
-                        className="h-full w-full object-cover transition-transform group-hover:scale-105"
+                        className="aspect-[3/4] w-full object-cover transition-transform duration-500 group-hover:scale-[1.02]"
                       />
-                    </div>
-                  ) : (
-                    <div className="flex h-48 items-center justify-center bg-muted/50">
-                      <ImageIcon className="h-10 w-10 text-muted-foreground/30" />
-                    </div>
-                  )}
-                  <div className="p-5 space-y-2">
-                    <span className="inline-block font-body text-xs font-semibold uppercase tracking-widest text-secondary">
-                      {post.category}
-                    </span>
-                    <h3 className="font-headline text-lg font-bold leading-snug text-foreground group-hover:text-secondary transition-colors">
-                      {post.title}
-                    </h3>
-                    <p className="font-body text-sm text-muted-foreground line-clamp-2">{post.excerpt}</p>
-                    <div className="flex items-center gap-1 text-xs text-muted-foreground pt-1">
+                    ) : (
+                      <div className="flex aspect-[3/4] items-center justify-center bg-muted">
+                        <ImageIcon className="h-12 w-12 text-muted-foreground/30" />
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Date + title below the image */}
+                  <div className="mt-3 space-y-1">
+                    <div className="flex items-center gap-1.5 font-body text-xs text-editorial">
                       <Calendar className="h-3 w-3" />
                       {new Date(post.published_at || post.created_at).toLocaleDateString("en-US", {
-                        month: "short", day: "numeric", year: "numeric",
+                        month: "short",
+                        day: "numeric",
+                        year: "numeric",
                       })}
                     </div>
+                    <h3 className="font-body text-sm font-medium leading-snug text-foreground group-hover:text-editorial transition-colors">
+                      {post.title}
+                    </h3>
                   </div>
                 </Link>
               ))}
