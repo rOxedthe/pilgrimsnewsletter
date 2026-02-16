@@ -27,14 +27,9 @@ interface ContentItem {
   content_value: string;
 }
 
-const LANDING_FIELDS = [
-  { key: "hero_title_line1", label: "Hero Title Line 1", type: "text" },
-  { key: "hero_title_line2", label: "Hero Title Line 2 (Accent)", type: "text" },
-  { key: "hero_description", label: "Hero Description", type: "textarea" },
-  { key: "hero_cta_primary_text", label: "Primary CTA Text", type: "text" },
-  { key: "hero_cta_primary_link", label: "Primary CTA Link", type: "text" },
-  { key: "hero_cta_secondary_text", label: "Secondary CTA Text", type: "text" },
-  { key: "hero_cta_secondary_link", label: "Secondary CTA Link", type: "text" },
+const LANDING_FIELDS: { key: string; label: string; type: string }[] = [
+  // Hero section is now data-driven from featured articles — no editable fields needed.
+  // Add any future landing page content fields here.
 ];
 
 export default function AdminSeoSettings() {
@@ -202,34 +197,17 @@ export default function AdminSeoSettings() {
         </Button>
       </div>
 
-      {/* Landing Page Content */}
-      <div className="rounded border border-border bg-card p-5 space-y-4">
+      {/* Landing Page Info */}
+      <div className="rounded border border-border bg-card p-5 space-y-2">
         <div className="flex items-center gap-2">
           <Type className="h-5 w-5 text-muted-foreground" />
-          <h2 className="font-headline text-lg font-semibold text-foreground">Landing Page Content</h2>
+          <h2 className="font-headline text-lg font-semibold text-foreground">Landing Page</h2>
         </div>
-        <p className="text-xs text-muted-foreground">Edit the hero section text, description, and call-to-action buttons.</p>
-        <div className="space-y-3">
-          {LANDING_FIELDS.map((field) => (
-            <div key={field.key} className="space-y-1">
-              <Label className="text-xs text-muted-foreground">{field.label}</Label>
-              {field.type === "textarea" ? (
-                <Textarea
-                  value={getContentVal(field.key)}
-                  onChange={(e) => handleContentEdit(field.key, e.target.value)}
-                  rows={2}
-                  placeholder={field.label}
-                />
-              ) : (
-                <Input
-                  value={getContentVal(field.key)}
-                  onChange={(e) => handleContentEdit(field.key, e.target.value)}
-                  placeholder={field.label}
-                />
-              )}
-            </div>
-          ))}
-        </div>
+        <p className="text-sm text-muted-foreground">
+          The homepage hero section is now driven by your <strong>featured articles</strong>. 
+          To change what appears in the hero, mark articles as "Featured" in the Articles manager. 
+          Footer and other static content can be edited in <strong>Site Content</strong>.
+        </p>
       </div>
 
       {/* Sitemap Section */}
