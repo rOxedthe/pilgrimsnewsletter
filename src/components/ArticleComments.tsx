@@ -8,6 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import AuthorAvatar from "@/components/AuthorAvatar";
 import { MessageSquare, Trash2, Send } from "lucide-react";
 import { Link } from "react-router-dom";
+import { getFilterError } from "@/lib/wordFilter";
 
 interface Comment {
   id: string;
@@ -56,6 +57,8 @@ export default function ArticleComments({ articleId }: { articleId: string }) {
     mutationFn: async () => {
       const trimmed = newComment.trim();
       if (!trimmed || !user) return;
+      const filterError = getFilterError(trimmed);
+      if (filterError) throw new Error(filterError);
       const { error } = await supabase.from("article_comments").insert({
         article_id: articleId,
         user_id: user.id,
