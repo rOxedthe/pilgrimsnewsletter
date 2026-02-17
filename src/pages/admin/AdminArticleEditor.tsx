@@ -13,6 +13,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { ArrowLeft, Save } from "lucide-react";
 import { z } from "zod";
+import { getFilterError } from "@/lib/wordFilter";
 
 const articleSchema = z.object({
   title: z.string().min(1, "Title is required").max(200),
@@ -77,6 +78,13 @@ export default function AdminArticleEditor() {
     mutationFn: async () => {
       articleSchema.parse(form);
       const content = editorInstanceRef.current?.getHTML() ?? articleContent;
+
+      // Word filter check
+      const textsToCheck = [form.title, form.excerpt, content];
+      for (const text of textsToCheck) {
+        const filterError = getFilterError(text);
+        if (filterError) throw new Error(filterError);
+      }
 
       // Get author profile id
       const { data: profile } = await supabase

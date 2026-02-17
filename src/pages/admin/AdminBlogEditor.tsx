@@ -12,6 +12,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { ArrowLeft, Save, Upload, X, ImagePlus } from "lucide-react";
+import { getFilterError } from "@/lib/wordFilter";
 
 export default function AdminBlogEditor() {
   const { id } = useParams();
@@ -99,6 +100,13 @@ export default function AdminBlogEditor() {
   const saveMutation = useMutation({
     mutationFn: async () => {
       const content = editorRef.current?.getHTML() ?? blogContent;
+
+      // Word filter check
+      const textsToCheck = [form.title, form.excerpt, content];
+      for (const text of textsToCheck) {
+        const filterError = getFilterError(text);
+        if (filterError) throw new Error(filterError);
+      }
 
       const { data: profile } = await supabase
         .from("profiles").select("id").eq("user_id", user!.id).single();
