@@ -104,7 +104,7 @@ export default function AdminBlogEditor() {
       // Word filter check
       const textsToCheck = [form.title, form.excerpt, content];
       for (const text of textsToCheck) {
-        const filterError = getFilterError(text);
+        const filterError = await getFilterError(text);
         if (filterError) throw new Error(filterError);
       }
 

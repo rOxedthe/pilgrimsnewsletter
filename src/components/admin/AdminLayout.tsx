@@ -1,6 +1,6 @@
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { LayoutDashboard, FileText, Globe, Settings, LogOut, Users, BookImage, MessageSquare } from "lucide-react";
+import { LayoutDashboard, FileText, Globe, Settings, LogOut, Users, BookImage, MessageSquare, ShieldAlert } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -12,6 +12,7 @@ const navItems = [
   { to: "/admin/comments", icon: MessageSquare, label: "Comments", end: false },
   { to: "/admin/content", icon: Globe, label: "Site Content", end: false },
   { to: "/admin/seo", icon: Settings, label: "SEO Settings", end: false },
+  { to: "/admin/banned-words", icon: ShieldAlert, label: "Banned Words", end: false },
 ];
 
 export default function AdminLayout() {

@@ -27,6 +27,7 @@ import AdminUsers from "./pages/admin/AdminUsers";
 import AdminBlogPosts from "./pages/admin/AdminBlogPosts";
 import AdminBlogEditor from "./pages/admin/AdminBlogEditor";
 import AdminComments from "./pages/admin/AdminComments";
+import AdminBannedWords from "./pages/admin/AdminBannedWords";
 
 const queryClient = new QueryClient();
 
@@ -58,6 +59,7 @@ const App = () => (
               <Route path="content" element={<AdminPageContent />} />
               <Route path="users" element={<AdminUsers />} />
               <Route path="seo" element={<AdminSeoSettings />} />
+              <Route path="banned-words" element={<AdminBannedWords />} />
             </Route>
             <Route path="*" element={<NotFound />} />
           </Routes>

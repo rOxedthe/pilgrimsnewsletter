@@ -57,7 +57,7 @@ export default function ArticleComments({ articleId }: { articleId: string }) {
     mutationFn: async () => {
       const trimmed = newComment.trim();
       if (!trimmed || !user) return;
-      const filterError = getFilterError(trimmed);
+      const filterError = await getFilterError(trimmed);
       if (filterError) throw new Error(filterError);
       const { error } = await supabase.from("article_comments").insert({
         article_id: articleId,
