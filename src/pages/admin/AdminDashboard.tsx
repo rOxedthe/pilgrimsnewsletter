@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Link } from "react-router-dom";
-import { FileText, Globe, Settings, Plus, BookImage } from "lucide-react";
+import { FileText, Globe, Settings, Plus, BookImage, LayoutDashboard } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 
@@ -23,6 +23,15 @@ export default function AdminDashboard() {
       const { count: published } = await supabase.from("blog_posts").select("*", { count: "exact", head: true }).eq("published", true);
       const { count: drafts } = await supabase.from("blog_posts").select("*", { count: "exact", head: true }).eq("published", false);
       return { total: total ?? 0, published: published ?? 0, drafts: drafts ?? 0 };
+    },
+  });
+
+  const { data: landingStats } = useQuery({
+    queryKey: ["admin-landing-stats"],
+    queryFn: async () => {
+      const { count: total } = await supabase.from("landing_posts").select("*", { count: "exact", head: true });
+      const { count: published } = await supabase.from("landing_posts").select("*", { count: "exact", head: true }).eq("published", true);
+      return { total: total ?? 0, published: published ?? 0 };
     },
   });
 
@@ -106,6 +115,28 @@ export default function AdminDashboard() {
         </div>
       </div>
 
+      {/* Landing Posts Stats */}
+      <div>
+        <h2 className="font-body text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">Landing Page Posts</h2>
+        <div className="grid gap-4 sm:grid-cols-3">
+          <Card>
+            <CardHeader className="pb-2"><CardTitle className="text-sm font-body uppercase tracking-wider text-muted-foreground">Total</CardTitle></CardHeader>
+            <CardContent><p className="text-3xl font-headline font-bold">{landingStats?.total ?? 0}</p></CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="pb-2"><CardTitle className="text-sm font-body uppercase tracking-wider text-muted-foreground">Published</CardTitle></CardHeader>
+            <CardContent><p className="text-3xl font-headline font-bold text-secondary">{landingStats?.published ?? 0}</p></CardContent>
+          </Card>
+          <Card className="border-dashed border-secondary/40">
+            <CardContent className="flex items-center justify-center h-full py-6">
+              <Link to="/admin/landing-posts" className="font-body text-sm text-secondary hover:underline font-semibold">
+                Manage Landing Posts →
+              </Link>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+
       {/* Recent Articles */}
       <Card>
         <CardHeader>
@@ -157,7 +188,7 @@ export default function AdminDashboard() {
       </Card>
 
       {/* Quick Links */}
-      <div className="grid gap-4 sm:grid-cols-4">
+      <div className="grid gap-4 sm:grid-cols-5">
         <Link to="/admin/articles" className="group">
           <Card className="transition-shadow hover:shadow-md">
             <CardContent className="flex items-center gap-3 p-5">
@@ -171,6 +202,14 @@ export default function AdminDashboard() {
             <CardContent className="flex items-center gap-3 p-5">
               <BookImage className="h-5 w-5 text-secondary" />
               <span className="font-body text-sm font-medium text-foreground group-hover:text-secondary">Manage Blog</span>
+            </CardContent>
+          </Card>
+        </Link>
+        <Link to="/admin/landing-posts" className="group">
+          <Card className="transition-shadow hover:shadow-md border-secondary/30">
+            <CardContent className="flex items-center gap-3 p-5">
+              <LayoutDashboard className="h-5 w-5 text-secondary" />
+              <span className="font-body text-sm font-medium text-foreground group-hover:text-secondary">Landing Posts</span>
             </CardContent>
           </Card>
         </Link>
