@@ -28,9 +28,9 @@ import AdminBlogPosts from "./pages/admin/AdminBlogPosts";
 import AdminBlogEditor from "./pages/admin/AdminBlogEditor";
 import AdminComments from "./pages/admin/AdminComments";
 import AdminBannedWords from "./pages/admin/AdminBannedWords";
+import AdminLandingPosts from "./pages/admin/AdminLandingPosts";
 
 const queryClient = new QueryClient();
-
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
@@ -60,6 +60,7 @@ const App = () => (
               <Route path="users" element={<AdminUsers />} />
               <Route path="seo" element={<AdminSeoSettings />} />
               <Route path="banned-words" element={<AdminBannedWords />} />
+              <Route path="landing-posts" element={<AdminLandingPosts />} />
             </Route>
             <Route path="*" element={<NotFound />} />
           </Routes>
@@ -69,5 +70,4 @@ const App = () => (
     </TooltipProvider>
   </QueryClientProvider>
 );
-
 export default App;
