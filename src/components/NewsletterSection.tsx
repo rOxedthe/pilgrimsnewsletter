@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Mail, Send, Loader2, CheckCircle, BookOpen } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { callMailchimp } from "@/lib/mailchimp";
 
 export default function NewsletterSection() {
   const [email, setEmail] = useState("");
@@ -17,15 +17,11 @@ export default function NewsletterSection() {
     setStatus("idle");
 
     try {
-      const { data, error } = await supabase.functions.invoke("mailchimp", {
-        body: {
-          action: "subscribe",
-          email: email.trim(),
-          firstName: firstName.trim(),
-        },
+      const data = await callMailchimp({
+        action: "subscribe",
+        email: email.trim(),
+        firstName: firstName.trim(),
       });
-
-      if (error) throw error;
 
       if (data?.success) {
         if (data.message?.includes("already")) {
