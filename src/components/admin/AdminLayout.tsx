@@ -1,14 +1,17 @@
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { LayoutDashboard, FileText, Globe, Settings, LogOut, Users, BookImage, MessageSquare, ShieldAlert, Newspaper } from "lucide-react";
+import { LayoutDashboard, FileText, Globe, Settings, LogOut, Users, BookImage, MessageSquare, ShieldAlert, Newspaper, CreditCard } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { useSessionTimeout } from "@/hooks/useSessionTimeout";
+import { logAdminAction } from "@/lib/adminLogger";
 
 const navItems = [
   { to: "/admin", icon: LayoutDashboard, label: "Dashboard", end: true },
   { to: "/admin/articles", icon: FileText, label: "Articles", end: false },
   { to: "/admin/blog", icon: BookImage, label: "Blog Posts", end: false },
   { to: "/admin/landing-posts", icon: Newspaper, label: "Landing Posts", end: false },
+  { to: "/admin/subscriptions", icon: CreditCard, label: "Subscriptions", end: false },
   { to: "/admin/users", icon: Users, label: "Users", end: false },
   { to: "/admin/comments", icon: MessageSquare, label: "Comments", end: false },
   { to: "/admin/content", icon: Globe, label: "Site Content", end: false },
@@ -18,10 +21,16 @@ const navItems = [
 
 export default function AdminLayout() {
   const navigate = useNavigate();
+
+  // Auto-logout after 30 minutes of inactivity, warn at 25 minutes
+  useSessionTimeout({ timeoutMinutes: 30, warningMinutes: 5 });
+
   const handleSignOut = async () => {
+    await logAdminAction("admin_logout", "auth");
     await supabase.auth.signOut();
     navigate("/admin/login");
   };
+
   return (
     <div className="flex min-h-screen bg-background">
       <aside className="sticky top-0 flex h-screen w-60 flex-col border-r border-border bg-card">
