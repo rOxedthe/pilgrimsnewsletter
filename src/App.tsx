@@ -15,6 +15,8 @@ import SettingsPage from "./pages/SettingsPage";
 import ProfilePage from "./pages/ProfilePage";
 import NotFound from "./pages/NotFound";
 import CookieConsent from "./components/CookieConsent";
+import SecurityHeaders from "./components/SecurityHeaders";
+import PageTracker from "./components/PageTracker";
 import AdminLogin from "./pages/admin/AdminLogin";
 import AdminLayout from "./components/admin/AdminLayout";
 import AdminProtectedRoute from "./components/admin/AdminProtectedRoute";
@@ -29,7 +31,7 @@ import AdminBlogEditor from "./pages/admin/AdminBlogEditor";
 import AdminComments from "./pages/admin/AdminComments";
 import AdminBannedWords from "./pages/admin/AdminBannedWords";
 import AdminLandingPosts from "./pages/admin/AdminLandingPosts";
-
+import AdminSubscriptions from "./pages/admin/AdminSubscriptions";
 const queryClient = new QueryClient();
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -38,6 +40,8 @@ const App = () => (
         <Toaster />
         <Sonner />
         <BrowserRouter>
+          <SecurityHeaders />
+          <PageTracker />
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/blog" element={<BlogPage />} />
@@ -61,6 +65,7 @@ const App = () => (
               <Route path="seo" element={<AdminSeoSettings />} />
               <Route path="banned-words" element={<AdminBannedWords />} />
               <Route path="landing-posts" element={<AdminLandingPosts />} />
+              <Route path="subscriptions" element={<AdminSubscriptions />} />
             </Route>
             <Route path="*" element={<NotFound />} />
           </Routes>
