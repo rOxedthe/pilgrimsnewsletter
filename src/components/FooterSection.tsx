@@ -2,7 +2,7 @@ import { useState } from "react";
 import { BookOpen, MapPin, Mail, Send, Loader2, CheckCircle } from "lucide-react";
 import { Link } from "react-router-dom";
 import { usePageContent } from "@/hooks/usePageContent";
-import { supabase } from "@/integrations/supabase/client";
+import { callMailchimp } from "@/lib/mailchimp";
 
 export default function FooterSection() {
   const { get } = usePageContent("/footer");
@@ -19,11 +19,10 @@ export default function FooterSection() {
     setStatus("idle");
 
     try {
-      const { data, error } = await supabase.functions.invoke("mailchimp", {
-        body: { action: "subscribe", email: email.trim() },
+      const data = await callMailchimp({
+        action: "subscribe",
+        email: email.trim(),
       });
-
-      if (error) throw error;
 
       if (data?.success) {
         if (data.message?.includes("already")) {
