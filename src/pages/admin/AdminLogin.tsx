@@ -18,7 +18,7 @@ export default function AdminLogin() {
     e.preventDefault();
     setLoading(true);
 
-    const email = `${username.toLowerCase().trim()}@pilgrimsnewsletter.com`;
+    const email = username.toLowerCase().trim();
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) {
       toast({ title: "Login failed", description: error.message, variant: "destructive" });
@@ -55,8 +55,8 @@ export default function AdminLogin() {
 
         <form onSubmit={handleSubmit} className="space-y-4 rounded border border-border bg-card p-6">
           <div className="space-y-2">
-            <Label htmlFor="username" className="font-body text-xs uppercase tracking-wider text-muted-foreground">Username</Label>
-            <Input id="username" type="text" value={username} onChange={(e) => setUsername(e.target.value)} placeholder="admin" required />
+            <Label htmlFor="username" className="font-body text-xs uppercase tracking-wider text-muted-foreground">Email</Label>
+            <Input id="username" type="email" value={username} onChange={(e) => setUsername(e.target.value)} placeholder="you@example.com" required />
           </div>
           <div className="space-y-2">
             <Label htmlFor="password" className="font-body text-xs uppercase tracking-wider text-muted-foreground">Password</Label>
