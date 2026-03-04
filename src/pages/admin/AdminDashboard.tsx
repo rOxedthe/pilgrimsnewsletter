@@ -1,9 +1,81 @@
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Link } from "react-router-dom";
-import { FileText, Globe, Settings, Plus, BookImage, LayoutDashboard } from "lucide-react";
+import {
+  FileText, Globe, Settings, Plus, BookImage, LayoutDashboard,
+  DollarSign, Users, TrendingUp, BarChart3
+} from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import {
+  PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend,
+  BarChart, Bar, XAxis, YAxis, CartesianGrid,
+  LineChart, Line, Area, AreaChart
+} from "recharts";
+
+/* ── Sample Analytics Data ────────────────────────────────────── */
+
+const membershipData = [
+  { name: "Member", value: 482, color: "#6366f1" },
+  { name: "Premier Member", value: 164, color: "#f59e0b" },
+];
+
+const monthlySubscriptions = [
+  { month: "Sep", newSubs: 32, cancelled: 8 },
+  { month: "Oct", newSubs: 45, cancelled: 12 },
+  { month: "Nov", newSubs: 58, cancelled: 10 },
+  { month: "Dec", newSubs: 41, cancelled: 15 },
+  { month: "Jan", newSubs: 63, cancelled: 9 },
+  { month: "Feb", newSubs: 72, cancelled: 11 },
+];
+
+const revenueData = [
+  { month: "Sep", revenue: 2840 },
+  { month: "Oct", revenue: 3620 },
+  { month: "Nov", revenue: 4510 },
+  { month: "Dec", revenue: 3980 },
+  { month: "Jan", revenue: 5240 },
+  { month: "Feb", revenue: 6130 },
+];
+
+const totalRevenue = revenueData.reduce((sum, d) => sum + d.revenue, 0);
+const totalMembers = membershipData.reduce((sum, d) => sum + d.value, 0);
+const avgRevenue = Math.round(totalRevenue / revenueData.length);
+const growthPercent = (
+  ((revenueData[revenueData.length - 1].revenue - revenueData[revenueData.length - 2].revenue) /
+    revenueData[revenueData.length - 2].revenue) *
+  100
+).toFixed(1);
+
+/* ── Custom Tooltip ───────────────────────────────────────────── */
+
+const CustomTooltip = ({ active, payload, label }: any) => {
+  if (!active || !payload?.length) return null;
+  return (
+    <div className="rounded-lg border border-border bg-card px-3 py-2 shadow-lg">
+      <p className="font-body text-xs font-semibold text-foreground mb-1">{label}</p>
+      {payload.map((entry: any, i: number) => (
+        <p key={i} className="font-body text-xs" style={{ color: entry.color }}>
+          {entry.name}: {entry.name.toLowerCase().includes("revenue") ? `$${entry.value.toLocaleString()}` : entry.value}
+        </p>
+      ))}
+    </div>
+  );
+};
+
+const PieTooltip = ({ active, payload }: any) => {
+  if (!active || !payload?.length) return null;
+  return (
+    <div className="rounded-lg border border-border bg-card px-3 py-2 shadow-lg">
+      <p className="font-body text-xs font-semibold" style={{ color: payload[0].payload.color }}>
+        {payload[0].name}: {payload[0].value} members
+      </p>
+    </div>
+  );
+};
+
+/* ── Component ────────────────────────────────────────────────── */
 
 export default function AdminDashboard() {
   const { data: articleStats } = useQuery({
@@ -76,6 +148,189 @@ export default function AdminDashboard() {
           </Button>
         </div>
       </div>
+
+      {/* ═══════════════════════════════════════════════════════════
+          ANALYTICS & REVENUE SECTION
+          ═══════════════════════════════════════════════════════════ */}
+      <div>
+        <h2 className="font-body text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">
+          Revenue & Analytics
+        </h2>
+
+        {/* KPI Cards */}
+        <div className="grid gap-4 sm:grid-cols-4 mb-6">
+          <Card className="border-l-4 border-l-indigo-500">
+            <CardContent className="flex items-center gap-4 p-5">
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-indigo-500/10">
+                <DollarSign className="h-5 w-5 text-indigo-500" />
+              </div>
+              <div>
+                <p className="font-body text-xs uppercase tracking-wider text-muted-foreground">Total Revenue</p>
+                <p className="text-2xl font-headline font-bold text-foreground">${totalRevenue.toLocaleString()}</p>
+              </div>
+            </CardContent>
+          </Card>
+          <Card className="border-l-4 border-l-amber-500">
+            <CardContent className="flex items-center gap-4 p-5">
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-amber-500/10">
+                <Users className="h-5 w-5 text-amber-500" />
+              </div>
+              <div>
+                <p className="font-body text-xs uppercase tracking-wider text-muted-foreground">Total Members</p>
+                <p className="text-2xl font-headline font-bold text-foreground">{totalMembers.toLocaleString()}</p>
+              </div>
+            </CardContent>
+          </Card>
+          <Card className="border-l-4 border-l-emerald-500">
+            <CardContent className="flex items-center gap-4 p-5">
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-emerald-500/10">
+                <BarChart3 className="h-5 w-5 text-emerald-500" />
+              </div>
+              <div>
+                <p className="font-body text-xs uppercase tracking-wider text-muted-foreground">Avg Monthly</p>
+                <p className="text-2xl font-headline font-bold text-foreground">${avgRevenue.toLocaleString()}</p>
+              </div>
+            </CardContent>
+          </Card>
+          <Card className="border-l-4 border-l-rose-500">
+            <CardContent className="flex items-center gap-4 p-5">
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-rose-500/10">
+                <TrendingUp className="h-5 w-5 text-rose-500" />
+              </div>
+              <div>
+                <p className="font-body text-xs uppercase tracking-wider text-muted-foreground">Monthly Growth</p>
+                <p className="text-2xl font-headline font-bold text-foreground">+{growthPercent}%</p>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Charts Row */}
+        <div className="grid gap-6 lg:grid-cols-3">
+          {/* Pie Chart - Membership Breakdown */}
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="font-body text-sm uppercase tracking-wider text-muted-foreground">
+                Membership Breakdown
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ResponsiveContainer width="100%" height={240}>
+                <PieChart>
+                  <Pie
+                    data={membershipData}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={55}
+                    outerRadius={90}
+                    paddingAngle={4}
+                    dataKey="value"
+                    strokeWidth={0}
+                  >
+                    {membershipData.map((entry, index) => (
+                      <Cell key={index} fill={entry.color} />
+                    ))}
+                  </Pie>
+                  <Tooltip content={<PieTooltip />} />
+                  <Legend
+                    verticalAlign="bottom"
+                    iconType="circle"
+                    iconSize={8}
+                    formatter={(value: string) => (
+                      <span className="font-body text-xs text-muted-foreground">{value}</span>
+                    )}
+                  />
+                </PieChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+
+          {/* Bar Chart - Monthly Subscriptions */}
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="font-body text-sm uppercase tracking-wider text-muted-foreground">
+                Monthly Subscriptions
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ResponsiveContainer width="100%" height={240}>
+                <BarChart data={monthlySubscriptions} barGap={4}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
+                  <XAxis
+                    dataKey="month"
+                    tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }}
+                    axisLine={false}
+                    tickLine={false}
+                  />
+                  <YAxis
+                    tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }}
+                    axisLine={false}
+                    tickLine={false}
+                    width={30}
+                  />
+                  <Tooltip content={<CustomTooltip />} />
+                  <Bar dataKey="newSubs" name="New Subs" fill="#6366f1" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="cancelled" name="Cancelled" fill="#f87171" radius={[4, 4, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+
+          {/* Area/Line Chart - Revenue Trend */}
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="font-body text-sm uppercase tracking-wider text-muted-foreground">
+                Revenue Trend
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ResponsiveContainer width="100%" height={240}>
+                <AreaChart data={revenueData}>
+                  <defs>
+                    <linearGradient id="revenueGradient" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#6366f1" stopOpacity={0.3} />
+                      <stop offset="100%" stopColor="#6366f1" stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
+                  <XAxis
+                    dataKey="month"
+                    tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }}
+                    axisLine={false}
+                    tickLine={false}
+                  />
+                  <YAxis
+                    tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }}
+                    axisLine={false}
+                    tickLine={false}
+                    width={40}
+                    tickFormatter={(v) => `$${(v / 1000).toFixed(0)}k`}
+                  />
+                  <Tooltip content={<CustomTooltip />} />
+                  <Area
+                    type="monotone"
+                    dataKey="revenue"
+                    name="Revenue"
+                    stroke="#6366f1"
+                    strokeWidth={2.5}
+                    fill="url(#revenueGradient)"
+                    dot={{ r: 4, fill: "#6366f1", strokeWidth: 0 }}
+                    activeDot={{ r: 6, fill: "#6366f1", strokeWidth: 2, stroke: "#fff" }}
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+        </div>
+
+        <p className="mt-3 font-body text-xs text-muted-foreground italic">
+          * Currently showing sample data. Connect your payment provider to display real revenue metrics.
+        </p>
+      </div>
+
+      {/* ═══════════════════════════════════════════════════════════
+          EXISTING SECTIONS BELOW
+          ═══════════════════════════════════════════════════════════ */}
 
       {/* Article Stats */}
       <div>
