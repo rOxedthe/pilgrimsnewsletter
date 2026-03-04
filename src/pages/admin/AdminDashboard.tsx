@@ -1,22 +1,24 @@
+import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Link } from "react-router-dom";
 import {
   FileText, Globe, Settings, Plus, BookImage, LayoutDashboard,
   DollarSign, Users, TrendingUp, BarChart3, CreditCard,
-  Eye, MousePointerClick, Activity, ArrowUpRight
+  Eye, MousePointerClick, Activity, Calendar
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend,
   BarChart, Bar, XAxis, YAxis, CartesianGrid,
   Area, AreaChart
 } from "recharts";
 
-/* ── Custom Tooltips ──────────────────────────────────────────── */
+/* ── Tooltips ─────────────────────────────────────────────────── */
 
-const CustomTooltip = ({ active, payload, label }: any) => {
+const ChartTooltip = ({ active, payload, label }: any) => {
   if (!active || !payload?.length) return null;
   return (
     <div className="rounded-lg border border-border bg-card px-3 py-2 shadow-lg">
@@ -25,14 +27,14 @@ const CustomTooltip = ({ active, payload, label }: any) => {
         <p key={i} className="font-body text-xs" style={{ color: entry.color }}>
           {entry.name}: {typeof entry.value === "number" && entry.name.toLowerCase().includes("revenue")
             ? `NPR ${entry.value.toLocaleString()}`
-            : entry.value}
+            : entry.value.toLocaleString()}
         </p>
       ))}
     </div>
   );
 };
 
-const PieTooltip = ({ active, payload }: any) => {
+const PieTooltipComp = ({ active, payload }: any) => {
   if (!active || !payload?.length) return null;
   return (
     <div className="rounded-lg border border-border bg-card px-3 py-2 shadow-lg">
@@ -43,36 +45,146 @@ const PieTooltip = ({ active, payload }: any) => {
   );
 };
 
-/* ── Helpers ───────────────────────────────────────────────────── */
+/* ── Time Period Filter Component ─────────────────────────────── */
 
-function getLast6Months(): { key: string; label: string }[] {
-  const months: { key: string; label: string }[] = [];
+type Period = "today" | "7d" | "30d" | "month" | "custom";
+
+function getDateRange(period: Period, customStart: string, customEnd: string): { start: Date; end: Date } {
   const now = new Date();
-  for (let i = 5; i >= 0; i--) {
-    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
-    const label = d.toLocaleString("default", { month: "short" });
-    months.push({ key, label });
+  const endOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
+
+  switch (period) {
+    case "today": {
+      const s = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0);
+      return { start: s, end: endOfDay };
+    }
+    case "7d": {
+      const s = new Date(now);
+      s.setDate(s.getDate() - 6);
+      s.setHours(0, 0, 0, 0);
+      return { start: s, end: endOfDay };
+    }
+    case "30d": {
+      const s = new Date(now);
+      s.setDate(s.getDate() - 29);
+      s.setHours(0, 0, 0, 0);
+      return { start: s, end: endOfDay };
+    }
+    case "month": {
+      const s = new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0, 0);
+      return { start: s, end: endOfDay };
+    }
+    case "custom": {
+      const s = customStart ? new Date(customStart + "T00:00:00") : new Date(now.getFullYear(), now.getMonth(), 1);
+      const e = customEnd ? new Date(customEnd + "T23:59:59.999") : endOfDay;
+      return { start: s, end: e };
+    }
+    default:
+      return { start: new Date(now.getFullYear(), now.getMonth(), 1), end: endOfDay };
   }
-  return months;
 }
 
-function getLast14Days(): { key: string; label: string }[] {
+function getDaysBetween(start: Date, end: Date): { key: string; label: string }[] {
   const days: { key: string; label: string }[] = [];
-  const now = new Date();
-  for (let i = 13; i >= 0; i--) {
-    const d = new Date(now);
-    d.setDate(d.getDate() - i);
-    const key = d.toISOString().split("T")[0];
-    const label = d.toLocaleDateString("default", { month: "short", day: "numeric" });
+  const current = new Date(start);
+  while (current <= end) {
+    const key = current.toISOString().split("T")[0];
+    const label = current.toLocaleDateString("default", { month: "short", day: "numeric" });
     days.push({ key, label });
+    current.setDate(current.getDate() + 1);
   }
   return days;
 }
 
-/* ── Component ────────────────────────────────────────────────── */
+function PeriodTabs({
+  period,
+  setPeriod,
+  customStart,
+  setCustomStart,
+  customEnd,
+  setCustomEnd,
+}: {
+  period: Period;
+  setPeriod: (p: Period) => void;
+  customStart: string;
+  setCustomStart: (s: string) => void;
+  customEnd: string;
+  setCustomEnd: (s: string) => void;
+}) {
+  const tabs: { value: Period; label: string }[] = [
+    { value: "today", label: "Today" },
+    { value: "7d", label: "7d" },
+    { value: "30d", label: "30d" },
+    { value: "month", label: "Month" },
+    { value: "custom", label: "Custom" },
+  ];
+
+  return (
+    <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+      <div className="flex rounded-lg border border-border overflow-hidden">
+        {tabs.map((tab) => (
+          <button
+            key={tab.value}
+            onClick={() => setPeriod(tab.value)}
+            className={`px-3 py-1.5 font-body text-xs font-semibold transition-colors ${
+              period === tab.value
+                ? "bg-foreground text-background"
+                : "bg-background text-muted-foreground hover:bg-muted"
+            }`}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </div>
+      {period === "custom" && (
+        <div className="flex items-center gap-2">
+          <Calendar className="h-3.5 w-3.5 text-muted-foreground" />
+          <Input
+            type="date"
+            value={customStart}
+            onChange={(e) => setCustomStart(e.target.value)}
+            className="h-8 w-36 text-xs"
+          />
+          <span className="text-xs text-muted-foreground">to</span>
+          <Input
+            type="date"
+            value={customEnd}
+            onChange={(e) => setCustomEnd(e.target.value)}
+            className="h-8 w-36 text-xs"
+          />
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ── Helpers ───────────────────────────────────────────────────── */
+
+const typeColors: Record<string, string> = {
+  page: "#6366f1",
+  article: "#10b981",
+  blog_post: "#f59e0b",
+  landing_post: "#ec4899",
+};
+const typeLabels: Record<string, string> = {
+  page: "Pages",
+  article: "Articles",
+  blog_post: "Blog Posts",
+  landing_post: "Landing",
+};
+
+/* ── Main Component ───────────────────────────────────────────── */
 
 export default function AdminDashboard() {
+  // Time filters - separate for traffic and revenue
+  const [trafficPeriod, setTrafficPeriod] = useState<Period>("30d");
+  const [trafficCustomStart, setTrafficCustomStart] = useState("");
+  const [trafficCustomEnd, setTrafficCustomEnd] = useState("");
+
+  const [revenuePeriod, setRevenuePeriod] = useState<Period>("30d");
+  const [revenueCustomStart, setRevenueCustomStart] = useState("");
+  const [revenueCustomEnd, setRevenueCustomEnd] = useState("");
+
   /* ── Content queries ──────────────────────────────────────── */
   const { data: articleStats } = useQuery({
     queryKey: ["admin-article-stats"],
@@ -106,11 +218,7 @@ export default function AdminDashboard() {
   const { data: recentArticles } = useQuery({
     queryKey: ["admin-recent-articles"],
     queryFn: async () => {
-      const { data } = await supabase
-        .from("articles")
-        .select("id, title, slug, published, created_at")
-        .order("created_at", { ascending: false })
-        .limit(5);
+      const { data } = await supabase.from("articles").select("id, title, slug, published, created_at").order("created_at", { ascending: false }).limit(5);
       return data ?? [];
     },
   });
@@ -118,163 +226,155 @@ export default function AdminDashboard() {
   const { data: recentBlogs } = useQuery({
     queryKey: ["admin-recent-blogs"],
     queryFn: async () => {
-      const { data } = await supabase
-        .from("blog_posts")
-        .select("id, title, slug, published, created_at")
-        .order("created_at", { ascending: false })
-        .limit(5);
+      const { data } = await supabase.from("blog_posts").select("id, title, slug, published, created_at").order("created_at", { ascending: false }).limit(5);
       return data ?? [];
     },
   });
 
-  /* ── Subscription / Revenue query ─────────────────────────── */
+  /* ── Data queries ─────────────────────────────────────────── */
   const { data: payments } = useQuery({
     queryKey: ["admin-subscription-payments-dashboard"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("subscription_payments")
-        .select("*")
-        .order("payment_date", { ascending: true });
+      const { data, error } = await supabase.from("subscription_payments").select("*").order("payment_date", { ascending: true });
       if (error) throw error;
       return data ?? [];
     },
   });
 
-  /* ── Page Views / Traffic query ───────────────────────────── */
   const { data: pageViews } = useQuery({
     queryKey: ["admin-page-views"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("page_views")
-        .select("*")
-        .order("created_at", { ascending: true });
+      const { data, error } = await supabase.from("page_views").select("*").order("created_at", { ascending: true });
       if (error) throw error;
       return data ?? [];
     },
   });
 
   /* ══════════════════════════════════════════════════════════════
-     COMPUTE REVENUE ANALYTICS
+     TRAFFIC ANALYTICS (filtered by period)
      ══════════════════════════════════════════════════════════════ */
-  const allPayments = payments ?? [];
-  const totalRevenue = allPayments.reduce((sum, p) => sum + Number(p.amount), 0);
-  const totalPayments = allPayments.length;
+  const trafficRange = useMemo(
+    () => getDateRange(trafficPeriod, trafficCustomStart, trafficCustomEnd),
+    [trafficPeriod, trafficCustomStart, trafficCustomEnd]
+  );
 
-  const memberCount = allPayments.filter((p) => p.membership_tier === "member").length;
-  const premierCount = allPayments.filter((p) => p.membership_tier === "premier_member").length;
+  const filteredViews = useMemo(() => {
+    return (pageViews ?? []).filter((v) => {
+      const d = new Date(v.created_at);
+      return d >= trafficRange.start && d <= trafficRange.end;
+    });
+  }, [pageViews, trafficRange]);
+
+  const totalViews = filteredViews.length;
+  const uniqueVisitors = new Set(filteredViews.map((v) => v.visitor_id)).size;
+
+  const today = new Date().toISOString().split("T")[0];
+  const todayViews = (pageViews ?? []).filter((v) => v.created_at?.startsWith(today)).length;
+
+  // Daily chart data
+  const trafficDays = useMemo(() => getDaysBetween(trafficRange.start, trafficRange.end), [trafficRange]);
+  const dailyViewsData = useMemo(() => {
+    return trafficDays.map(({ key, label }) => {
+      const count = filteredViews.filter((v) => v.created_at?.startsWith(key)).length;
+      return { day: label, views: count };
+    });
+  }, [trafficDays, filteredViews]);
+
+  const avgViewsPerDay = trafficDays.length > 0
+    ? Math.round(totalViews / trafficDays.length)
+    : 0;
+
+  // Top articles
+  const topArticles = useMemo(() => {
+    const map: Record<string, { path: string; title: string; views: number }> = {};
+    filteredViews.filter((v) => v.page_type === "article").forEach((v) => {
+      if (!map[v.page_path]) map[v.page_path] = { path: v.page_path, title: v.page_title || v.page_path, views: 0 };
+      map[v.page_path].views++;
+    });
+    return Object.values(map).sort((a, b) => b.views - a.views).slice(0, 5);
+  }, [filteredViews]);
+
+  // Top blogs
+  const topBlogs = useMemo(() => {
+    const map: Record<string, { path: string; title: string; views: number }> = {};
+    filteredViews.filter((v) => v.page_type === "blog_post").forEach((v) => {
+      if (!map[v.page_path]) map[v.page_path] = { path: v.page_path, title: v.page_title || v.page_path, views: 0 };
+      map[v.page_path].views++;
+    });
+    return Object.values(map).sort((a, b) => b.views - a.views).slice(0, 5);
+  }, [filteredViews]);
+
+  // All pages ranked
+  const topPages = useMemo(() => {
+    const map: Record<string, { path: string; title: string; type: string; views: number; visitors: Set<string> }> = {};
+    filteredViews.forEach((v) => {
+      if (!map[v.page_path]) map[v.page_path] = { path: v.page_path, title: v.page_title || v.page_path, type: v.page_type || "page", views: 0, visitors: new Set() };
+      map[v.page_path].views++;
+      map[v.page_path].visitors.add(v.visitor_id);
+    });
+    return Object.values(map).map((p) => ({ ...p, unique: p.visitors.size })).sort((a, b) => b.views - a.views).slice(0, 10);
+  }, [filteredViews]);
+
+  // Page type pie
+  const pageTypeData = useMemo(() => {
+    const counts: Record<string, number> = {};
+    filteredViews.forEach((v) => { const t = v.page_type || "page"; counts[t] = (counts[t] || 0) + 1; });
+    return Object.entries(counts).map(([type, value]) => ({
+      name: typeLabels[type] || type, value, color: typeColors[type] || "#8884d8", unit: "views",
+    }));
+  }, [filteredViews]);
+
+  const hasTrafficData = filteredViews.length > 0;
+
+  /* ══════════════════════════════════════════════════════════════
+     REVENUE ANALYTICS (filtered by period)
+     ══════════════════════════════════════════════════════════════ */
+  const revenueRange = useMemo(
+    () => getDateRange(revenuePeriod, revenueCustomStart, revenueCustomEnd),
+    [revenuePeriod, revenueCustomStart, revenueCustomEnd]
+  );
+
+  const filteredPayments = useMemo(() => {
+    return (payments ?? []).filter((p) => {
+      const d = new Date(p.payment_date);
+      return d >= revenueRange.start && d <= revenueRange.end;
+    });
+  }, [payments, revenueRange]);
+
+  const totalRevenue = filteredPayments.reduce((s, p) => s + Number(p.amount), 0);
+  const totalPayments = filteredPayments.length;
+  const memberCount = filteredPayments.filter((p) => p.membership_tier === "member").length;
+  const premierCount = filteredPayments.filter((p) => p.membership_tier === "premier_member").length;
   const membershipData = [
     { name: "Member", value: memberCount, color: "#6366f1", unit: "payments" },
     { name: "Premier", value: premierCount, color: "#f59e0b", unit: "payments" },
   ].filter((d) => d.value > 0);
 
-  const last6 = getLast6Months();
-  const monthlyRevData = last6.map(({ key, label }) => {
-    const mp = allPayments.filter((p) => {
-      const d = new Date(p.payment_date);
-      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}` === key;
+  // Daily revenue chart
+  const revenueDays = useMemo(() => getDaysBetween(revenueRange.start, revenueRange.end), [revenueRange]);
+  const dailyRevenueData = useMemo(() => {
+    return revenueDays.map(({ key, label }) => {
+      const dayPayments = filteredPayments.filter((p) => p.payment_date?.startsWith(key));
+      return {
+        day: label,
+        revenue: dayPayments.reduce((s, p) => s + Number(p.amount), 0),
+        payments: dayPayments.length,
+      };
     });
-    return { month: label, revenue: mp.reduce((s, p) => s + Number(p.amount), 0), newSubs: mp.length };
-  });
+  }, [revenueDays, filteredPayments]);
 
-  const curMonthRev = monthlyRevData[monthlyRevData.length - 1]?.revenue ?? 0;
-  const prevMonthRev = monthlyRevData[monthlyRevData.length - 2]?.revenue ?? 0;
-  const growthPercent = prevMonthRev > 0
-    ? (((curMonthRev - prevMonthRev) / prevMonthRev) * 100).toFixed(1)
-    : "0.0";
-  const avgRevenue = monthlyRevData.filter((m) => m.revenue > 0).length > 0
-    ? Math.round(totalRevenue / monthlyRevData.filter((m) => m.revenue > 0).length)
+  const avgRevenuePerDay = revenueDays.length > 0
+    ? Math.round(totalRevenue / revenueDays.length)
     : 0;
-  const hasRevenueData = allPayments.length > 0;
 
-  /* ══════════════════════════════════════════════════════════════
-     COMPUTE TRAFFIC ANALYTICS
-     ══════════════════════════════════════════════════════════════ */
-  const allViews = pageViews ?? [];
-  const totalViews = allViews.length;
-  const uniqueVisitors = new Set(allViews.map((v) => v.visitor_id)).size;
+  const hasRevenueData = filteredPayments.length > 0;
 
-  // Today's views
-  const today = new Date().toISOString().split("T")[0];
-  const todayViews = allViews.filter((v) => v.created_at?.startsWith(today)).length;
-
-  // Views per day (last 14 days)
-  const last14 = getLast14Days();
-  const dailyViewsData = last14.map(({ key, label }) => {
-    const count = allViews.filter((v) => v.created_at?.startsWith(key)).length;
-    return { day: label, views: count };
-  });
-
-  // Top articles by views
-  const articleViews: Record<string, { path: string; title: string; views: number }> = {};
-  allViews
-    .filter((v) => v.page_type === "article")
-    .forEach((v) => {
-      const key = v.page_path;
-      if (!articleViews[key]) {
-        articleViews[key] = { path: key, title: v.page_title || key, views: 0 };
-      }
-      articleViews[key].views++;
-    });
-  const topArticles = Object.values(articleViews)
-    .sort((a, b) => b.views - a.views)
-    .slice(0, 5);
-
-  // Top blog posts by views
-  const blogViews: Record<string, { path: string; title: string; views: number }> = {};
-  allViews
-    .filter((v) => v.page_type === "blog_post")
-    .forEach((v) => {
-      const key = v.page_path;
-      if (!blogViews[key]) {
-        blogViews[key] = { path: key, title: v.page_title || key, views: 0 };
-      }
-      blogViews[key].views++;
-    });
-  const topBlogs = Object.values(blogViews)
-    .sort((a, b) => b.views - a.views)
-    .slice(0, 5);
-
-  // All pages ranked by views
-  const allPageViews: Record<string, { path: string; title: string; type: string; views: number; uniqueVisitors: Set<string> }> = {};
-  allViews.forEach((v) => {
-    const key = v.page_path;
-    if (!allPageViews[key]) {
-      allPageViews[key] = { path: key, title: v.page_title || key, type: v.page_type || "page", views: 0, uniqueVisitors: new Set() };
-    }
-    allPageViews[key].views++;
-    allPageViews[key].uniqueVisitors.add(v.visitor_id);
-  });
-  const topPages = Object.values(allPageViews)
-    .map((p) => ({ ...p, unique: p.uniqueVisitors.size }))
-    .sort((a, b) => b.views - a.views)
-    .slice(0, 10);
-
-  const hasTrafficData = allViews.length > 0;
-
-  /* ── Page type distribution for pie chart ─────────────────── */
-  const pageTypeCount: Record<string, number> = {};
-  allViews.forEach((v) => {
-    const t = v.page_type || "page";
-    pageTypeCount[t] = (pageTypeCount[t] || 0) + 1;
-  });
-  const typeColors: Record<string, string> = {
-    page: "#6366f1",
-    article: "#10b981",
-    blog_post: "#f59e0b",
-    landing_post: "#ec4899",
-  };
-  const typeLabels: Record<string, string> = {
-    page: "Pages",
-    article: "Articles",
-    blog_post: "Blog Posts",
-    landing_post: "Landing",
-  };
-  const pageTypeData = Object.entries(pageTypeCount).map(([type, value]) => ({
-    name: typeLabels[type] || type,
-    value,
-    color: typeColors[type] || "#8884d8",
-    unit: "views",
-  }));
+  /* ── Period label helper ──────────────────────────────────── */
+  function periodLabel(period: Period, start: string, end: string): string {
+    const range = getDateRange(period, start, end);
+    const fmt = (d: Date) => d.toLocaleDateString("default", { month: "short", day: "numeric", year: "numeric" });
+    return `${fmt(range.start)} – ${fmt(range.end)}`;
+  }
 
   return (
     <div className="space-y-8">
@@ -282,27 +382,36 @@ export default function AdminDashboard() {
         <h1 className="font-headline text-2xl font-bold text-foreground">Dashboard</h1>
         <div className="flex gap-2">
           <Button asChild variant="outline">
-            <Link to="/admin/blog/new">
-              <Plus className="mr-2 h-4 w-4" /> New Blog Post
-            </Link>
+            <Link to="/admin/blog/new"><Plus className="mr-2 h-4 w-4" /> New Blog Post</Link>
           </Button>
           <Button asChild>
-            <Link to="/admin/articles/new">
-              <Plus className="mr-2 h-4 w-4" /> New Article
-            </Link>
+            <Link to="/admin/articles/new"><Plus className="mr-2 h-4 w-4" /> New Article</Link>
           </Button>
         </div>
       </div>
 
       {/* ═══════════════════════════════════════════════════════════
-          TRAFFIC ANALYTICS SECTION
+          TRAFFIC SECTION
           ═══════════════════════════════════════════════════════════ */}
       <div>
-        <h2 className="font-body text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">
-          Website Traffic
-        </h2>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3">
+          <h2 className="font-body text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            Website Traffic
+          </h2>
+          <PeriodTabs
+            period={trafficPeriod}
+            setPeriod={setTrafficPeriod}
+            customStart={trafficCustomStart}
+            setCustomStart={setTrafficCustomStart}
+            customEnd={trafficCustomEnd}
+            setCustomEnd={setTrafficCustomEnd}
+          />
+        </div>
+        <p className="font-body text-xs text-muted-foreground mb-4">
+          {periodLabel(trafficPeriod, trafficCustomStart, trafficCustomEnd)}
+        </p>
 
-        {/* Traffic KPI Cards */}
+        {/* Traffic KPIs */}
         <div className="grid gap-4 sm:grid-cols-4 mb-6">
           <Card className="border-l-4 border-l-violet-500">
             <CardContent className="flex items-center gap-4 p-5">
@@ -344,11 +453,7 @@ export default function AdminDashboard() {
               </div>
               <div>
                 <p className="font-body text-xs uppercase tracking-wider text-muted-foreground">Avg Views/Day</p>
-                <p className="text-2xl font-headline font-bold text-foreground">
-                  {dailyViewsData.length > 0
-                    ? Math.round(dailyViewsData.reduce((s, d) => s + d.views, 0) / dailyViewsData.length)
-                    : 0}
-                </p>
+                <p className="text-2xl font-headline font-bold text-foreground">{avgViewsPerDay}</p>
               </div>
             </CardContent>
           </Card>
@@ -356,106 +461,58 @@ export default function AdminDashboard() {
 
         {hasTrafficData ? (
           <>
-            {/* Traffic Charts Row */}
             <div className="grid gap-6 lg:grid-cols-3 mb-6">
-              {/* Daily Views Trend */}
+              {/* Daily Views */}
               <Card className="lg:col-span-2">
                 <CardHeader className="pb-2">
-                  <CardTitle className="font-body text-sm uppercase tracking-wider text-muted-foreground">
-                    Daily Views (Last 14 Days)
-                  </CardTitle>
+                  <CardTitle className="font-body text-sm uppercase tracking-wider text-muted-foreground">Daily Views</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <ResponsiveContainer width="100%" height={240}>
                     <AreaChart data={dailyViewsData}>
                       <defs>
-                        <linearGradient id="viewsGradient" x1="0" y1="0" x2="0" y2="1">
+                        <linearGradient id="viewsGrad" x1="0" y1="0" x2="0" y2="1">
                           <stop offset="0%" stopColor="#8b5cf6" stopOpacity={0.3} />
                           <stop offset="100%" stopColor="#8b5cf6" stopOpacity={0} />
                         </linearGradient>
                       </defs>
                       <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
-                      <XAxis
-                        dataKey="day"
-                        tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }}
-                        axisLine={false}
-                        tickLine={false}
-                        interval={1}
-                      />
-                      <YAxis
-                        tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }}
-                        axisLine={false}
-                        tickLine={false}
-                        width={30}
-                        allowDecimals={false}
-                      />
-                      <Tooltip content={<CustomTooltip />} />
-                      <Area
-                        type="monotone"
-                        dataKey="views"
-                        name="Views"
-                        stroke="#8b5cf6"
-                        strokeWidth={2.5}
-                        fill="url(#viewsGradient)"
-                        dot={{ r: 3, fill: "#8b5cf6", strokeWidth: 0 }}
-                        activeDot={{ r: 5, fill: "#8b5cf6", strokeWidth: 2, stroke: "#fff" }}
-                      />
+                      <XAxis dataKey="day" tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} axisLine={false} tickLine={false} interval={Math.max(0, Math.floor(dailyViewsData.length / 8))} />
+                      <YAxis tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} axisLine={false} tickLine={false} width={30} allowDecimals={false} />
+                      <Tooltip content={<ChartTooltip />} />
+                      <Area type="monotone" dataKey="views" name="Views" stroke="#8b5cf6" strokeWidth={2.5} fill="url(#viewsGrad)" dot={{ r: 3, fill: "#8b5cf6", strokeWidth: 0 }} activeDot={{ r: 5, fill: "#8b5cf6", strokeWidth: 2, stroke: "#fff" }} />
                     </AreaChart>
                   </ResponsiveContainer>
                 </CardContent>
               </Card>
 
-              {/* Page Type Distribution */}
+              {/* Type Pie */}
               <Card>
                 <CardHeader className="pb-2">
-                  <CardTitle className="font-body text-sm uppercase tracking-wider text-muted-foreground">
-                    Views by Content Type
-                  </CardTitle>
+                  <CardTitle className="font-body text-sm uppercase tracking-wider text-muted-foreground">Views by Type</CardTitle>
                 </CardHeader>
                 <CardContent>
                   {pageTypeData.length > 0 ? (
                     <ResponsiveContainer width="100%" height={240}>
                       <PieChart>
-                        <Pie
-                          data={pageTypeData}
-                          cx="50%"
-                          cy="50%"
-                          innerRadius={55}
-                          outerRadius={90}
-                          paddingAngle={4}
-                          dataKey="value"
-                          strokeWidth={0}
-                        >
-                          {pageTypeData.map((entry, index) => (
-                            <Cell key={index} fill={entry.color} />
-                          ))}
+                        <Pie data={pageTypeData} cx="50%" cy="50%" innerRadius={55} outerRadius={90} paddingAngle={4} dataKey="value" strokeWidth={0}>
+                          {pageTypeData.map((entry, index) => (<Cell key={index} fill={entry.color} />))}
                         </Pie>
-                        <Tooltip content={<PieTooltip />} />
-                        <Legend
-                          verticalAlign="bottom"
-                          iconType="circle"
-                          iconSize={8}
-                          formatter={(value: string) => (
-                            <span className="font-body text-xs text-muted-foreground">{value}</span>
-                          )}
-                        />
+                        <Tooltip content={<PieTooltipComp />} />
+                        <Legend verticalAlign="bottom" iconType="circle" iconSize={8} formatter={(v: string) => <span className="font-body text-xs text-muted-foreground">{v}</span>} />
                       </PieChart>
                     </ResponsiveContainer>
                   ) : (
-                    <div className="flex items-center justify-center h-[240px] text-muted-foreground text-sm">
-                      No data yet
-                    </div>
+                    <div className="flex items-center justify-center h-[240px] text-muted-foreground text-sm">No data</div>
                   )}
                 </CardContent>
               </Card>
             </div>
 
-            {/* Top Pages Table */}
+            {/* All Pages Table */}
             <Card className="mb-6">
               <CardHeader className="pb-2">
-                <CardTitle className="font-body text-sm uppercase tracking-wider text-muted-foreground">
-                  All Pages by Views
-                </CardTitle>
+                <CardTitle className="font-body text-sm uppercase tracking-wider text-muted-foreground">All Pages by Views</CardTitle>
               </CardHeader>
               <CardContent className="p-0">
                 <div className="overflow-x-auto">
@@ -474,40 +531,23 @@ export default function AdminDashboard() {
                         <tr key={page.path} className="border-b border-border hover:bg-muted/20 transition-colors">
                           <td className="px-4 py-3 font-body text-xs text-muted-foreground">{i + 1}</td>
                           <td className="px-4 py-3">
-                            <p className="font-body text-sm font-medium text-foreground truncate max-w-[300px]">
-                              {page.title}
-                            </p>
+                            <p className="font-body text-sm font-medium text-foreground truncate max-w-[300px]">{page.title}</p>
                             <p className="font-body text-xs text-muted-foreground">{page.path}</p>
                           </td>
                           <td className="px-4 py-3">
-                            <span
-                              className={`rounded-full px-2 py-0.5 text-xs font-semibold ${
-                                page.type === "article"
-                                  ? "bg-emerald-100 text-emerald-700"
-                                  : page.type === "blog_post"
-                                  ? "bg-amber-100 text-amber-700"
-                                  : page.type === "landing_post"
-                                  ? "bg-pink-100 text-pink-700"
-                                  : "bg-indigo-100 text-indigo-700"
-                              }`}
-                            >
-                              {typeLabels[page.type] || page.type}
-                            </span>
+                            <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${
+                              page.type === "article" ? "bg-emerald-100 text-emerald-700"
+                              : page.type === "blog_post" ? "bg-amber-100 text-amber-700"
+                              : page.type === "landing_post" ? "bg-pink-100 text-pink-700"
+                              : "bg-indigo-100 text-indigo-700"
+                            }`}>{typeLabels[page.type] || page.type}</span>
                           </td>
-                          <td className="px-4 py-3 text-right font-body font-semibold text-foreground">
-                            {page.views.toLocaleString()}
-                          </td>
-                          <td className="px-4 py-3 text-right font-body text-muted-foreground">
-                            {page.unique.toLocaleString()}
-                          </td>
+                          <td className="px-4 py-3 text-right font-body font-semibold text-foreground">{page.views.toLocaleString()}</td>
+                          <td className="px-4 py-3 text-right font-body text-muted-foreground">{page.unique.toLocaleString()}</td>
                         </tr>
                       ))}
                       {topPages.length === 0 && (
-                        <tr>
-                          <td colSpan={5} className="px-4 py-8 text-center text-muted-foreground text-sm">
-                            No page views recorded yet.
-                          </td>
-                        </tr>
+                        <tr><td colSpan={5} className="px-4 py-8 text-center text-muted-foreground text-sm">No page views in this period.</td></tr>
                       )}
                     </tbody>
                   </table>
@@ -515,63 +555,42 @@ export default function AdminDashboard() {
               </CardContent>
             </Card>
 
-            {/* Top Articles & Blogs side by side */}
+            {/* Top Articles & Blogs */}
             <div className="grid gap-6 lg:grid-cols-2">
-              {/* Top Articles */}
               <Card>
-                <CardHeader className="pb-2">
-                  <CardTitle className="font-body text-sm uppercase tracking-wider text-muted-foreground">
-                    Top Articles
-                  </CardTitle>
-                </CardHeader>
+                <CardHeader className="pb-2"><CardTitle className="font-body text-sm uppercase tracking-wider text-muted-foreground">Top Articles</CardTitle></CardHeader>
                 <CardContent className="space-y-2">
                   {topArticles.length === 0 ? (
-                    <p className="text-sm text-muted-foreground py-4 text-center">No article views yet.</p>
-                  ) : (
-                    topArticles.map((a, i) => (
-                      <div key={a.path} className="flex items-center justify-between rounded border border-border p-3">
-                        <div className="flex items-center gap-3 min-w-0">
-                          <span className="flex h-6 w-6 items-center justify-center rounded-full bg-emerald-100 text-emerald-700 text-xs font-bold shrink-0">
-                            {i + 1}
-                          </span>
-                          <p className="font-body text-sm font-medium text-foreground truncate">{a.title}</p>
-                        </div>
-                        <div className="flex items-center gap-1 text-muted-foreground shrink-0 ml-3">
-                          <Eye className="h-3 w-3" />
-                          <span className="font-body text-xs font-semibold">{a.views}</span>
-                        </div>
+                    <p className="text-sm text-muted-foreground py-4 text-center">No article views in this period.</p>
+                  ) : topArticles.map((a, i) => (
+                    <div key={a.path} className="flex items-center justify-between rounded border border-border p-3">
+                      <div className="flex items-center gap-3 min-w-0">
+                        <span className="flex h-6 w-6 items-center justify-center rounded-full bg-emerald-100 text-emerald-700 text-xs font-bold shrink-0">{i + 1}</span>
+                        <p className="font-body text-sm font-medium text-foreground truncate">{a.title}</p>
                       </div>
-                    ))
-                  )}
+                      <div className="flex items-center gap-1 text-muted-foreground shrink-0 ml-3">
+                        <Eye className="h-3 w-3" /><span className="font-body text-xs font-semibold">{a.views}</span>
+                      </div>
+                    </div>
+                  ))}
                 </CardContent>
               </Card>
-
-              {/* Top Blog Posts */}
               <Card>
-                <CardHeader className="pb-2">
-                  <CardTitle className="font-body text-sm uppercase tracking-wider text-muted-foreground">
-                    Top Blog Posts
-                  </CardTitle>
-                </CardHeader>
+                <CardHeader className="pb-2"><CardTitle className="font-body text-sm uppercase tracking-wider text-muted-foreground">Top Blog Posts</CardTitle></CardHeader>
                 <CardContent className="space-y-2">
                   {topBlogs.length === 0 ? (
-                    <p className="text-sm text-muted-foreground py-4 text-center">No blog views yet.</p>
-                  ) : (
-                    topBlogs.map((b, i) => (
-                      <div key={b.path} className="flex items-center justify-between rounded border border-border p-3">
-                        <div className="flex items-center gap-3 min-w-0">
-                          <span className="flex h-6 w-6 items-center justify-center rounded-full bg-amber-100 text-amber-700 text-xs font-bold shrink-0">
-                            {i + 1}
-                          </span>
-                          <p className="font-body text-sm font-medium text-foreground truncate">{b.title}</p>
-                        </div>
-                        <div className="flex items-center gap-1 text-muted-foreground shrink-0 ml-3">
-                          <Eye className="h-3 w-3" />
-                          <span className="font-body text-xs font-semibold">{b.views}</span>
-                        </div>
+                    <p className="text-sm text-muted-foreground py-4 text-center">No blog views in this period.</p>
+                  ) : topBlogs.map((b, i) => (
+                    <div key={b.path} className="flex items-center justify-between rounded border border-border p-3">
+                      <div className="flex items-center gap-3 min-w-0">
+                        <span className="flex h-6 w-6 items-center justify-center rounded-full bg-amber-100 text-amber-700 text-xs font-bold shrink-0">{i + 1}</span>
+                        <p className="font-body text-sm font-medium text-foreground truncate">{b.title}</p>
                       </div>
-                    ))
-                  )}
+                      <div className="flex items-center gap-1 text-muted-foreground shrink-0 ml-3">
+                        <Eye className="h-3 w-3" /><span className="font-body text-xs font-semibold">{b.views}</span>
+                      </div>
+                    </div>
+                  ))}
                 </CardContent>
               </Card>
             </div>
@@ -580,36 +599,44 @@ export default function AdminDashboard() {
           <Card className="border-dashed">
             <CardContent className="flex flex-col items-center justify-center py-12 text-center">
               <Eye className="h-10 w-10 text-muted-foreground/40 mb-3" />
-              <p className="font-body text-sm text-muted-foreground mb-1">No traffic data yet</p>
-              <p className="font-body text-xs text-muted-foreground">
-                Traffic will appear here once visitors start browsing your site.
-              </p>
+              <p className="font-body text-sm text-muted-foreground mb-1">No traffic data for this period</p>
+              <p className="font-body text-xs text-muted-foreground">Try selecting a different time range or wait for visitors.</p>
             </CardContent>
           </Card>
         )}
       </div>
 
       {/* ═══════════════════════════════════════════════════════════
-          REVENUE & ANALYTICS SECTION
+          REVENUE SECTION
           ═══════════════════════════════════════════════════════════ */}
       <div>
-        <div className="flex items-center justify-between mb-3">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3">
           <h2 className="font-body text-xs font-semibold uppercase tracking-wider text-muted-foreground">
             Revenue & Analytics
           </h2>
-          <Button asChild variant="outline" size="sm">
-            <Link to="/admin/subscriptions">
-              <CreditCard className="mr-2 h-3 w-3" /> Manage Payments
-            </Link>
-          </Button>
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+            <PeriodTabs
+              period={revenuePeriod}
+              setPeriod={setRevenuePeriod}
+              customStart={revenueCustomStart}
+              setCustomStart={setRevenueCustomStart}
+              customEnd={revenueCustomEnd}
+              setCustomEnd={setRevenueCustomEnd}
+            />
+            <Button asChild variant="outline" size="sm">
+              <Link to="/admin/subscriptions"><CreditCard className="mr-2 h-3 w-3" /> Manage Payments</Link>
+            </Button>
+          </div>
         </div>
+        <p className="font-body text-xs text-muted-foreground mb-4">
+          {periodLabel(revenuePeriod, revenueCustomStart, revenueCustomEnd)}
+        </p>
 
+        {/* Revenue KPIs */}
         <div className="grid gap-4 sm:grid-cols-4 mb-6">
           <Card className="border-l-4 border-l-indigo-500">
             <CardContent className="flex items-center gap-4 p-5">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-indigo-500/10">
-                <DollarSign className="h-5 w-5 text-indigo-500" />
-              </div>
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-indigo-500/10"><DollarSign className="h-5 w-5 text-indigo-500" /></div>
               <div>
                 <p className="font-body text-xs uppercase tracking-wider text-muted-foreground">Total Revenue</p>
                 <p className="text-2xl font-headline font-bold text-foreground">NPR {totalRevenue.toLocaleString()}</p>
@@ -618,9 +645,7 @@ export default function AdminDashboard() {
           </Card>
           <Card className="border-l-4 border-l-amber-500">
             <CardContent className="flex items-center gap-4 p-5">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-amber-500/10">
-                <Users className="h-5 w-5 text-amber-500" />
-              </div>
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-amber-500/10"><Users className="h-5 w-5 text-amber-500" /></div>
               <div>
                 <p className="font-body text-xs uppercase tracking-wider text-muted-foreground">Total Payments</p>
                 <p className="text-2xl font-headline font-bold text-foreground">{totalPayments}</p>
@@ -629,25 +654,19 @@ export default function AdminDashboard() {
           </Card>
           <Card className="border-l-4 border-l-emerald-500">
             <CardContent className="flex items-center gap-4 p-5">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-emerald-500/10">
-                <BarChart3 className="h-5 w-5 text-emerald-500" />
-              </div>
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-emerald-500/10"><BarChart3 className="h-5 w-5 text-emerald-500" /></div>
               <div>
-                <p className="font-body text-xs uppercase tracking-wider text-muted-foreground">Avg Monthly</p>
-                <p className="text-2xl font-headline font-bold text-foreground">NPR {avgRevenue.toLocaleString()}</p>
+                <p className="font-body text-xs uppercase tracking-wider text-muted-foreground">Avg/Day</p>
+                <p className="text-2xl font-headline font-bold text-foreground">NPR {avgRevenuePerDay.toLocaleString()}</p>
               </div>
             </CardContent>
           </Card>
           <Card className="border-l-4 border-l-rose-500">
             <CardContent className="flex items-center gap-4 p-5">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-rose-500/10">
-                <TrendingUp className="h-5 w-5 text-rose-500" />
-              </div>
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-rose-500/10"><TrendingUp className="h-5 w-5 text-rose-500" /></div>
               <div>
-                <p className="font-body text-xs uppercase tracking-wider text-muted-foreground">Monthly Growth</p>
-                <p className="text-2xl font-headline font-bold text-foreground">
-                  {Number(growthPercent) >= 0 ? "+" : ""}{growthPercent}%
-                </p>
+                <p className="font-body text-xs uppercase tracking-wider text-muted-foreground">Premier Members</p>
+                <p className="text-2xl font-headline font-bold text-foreground">{premierCount}</p>
               </div>
             </CardContent>
           </Card>
@@ -656,9 +675,7 @@ export default function AdminDashboard() {
         {hasRevenueData ? (
           <div className="grid gap-6 lg:grid-cols-3">
             <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="font-body text-sm uppercase tracking-wider text-muted-foreground">Membership Breakdown</CardTitle>
-              </CardHeader>
+              <CardHeader className="pb-2"><CardTitle className="font-body text-sm uppercase tracking-wider text-muted-foreground">Membership Breakdown</CardTitle></CardHeader>
               <CardContent>
                 {membershipData.length > 0 ? (
                   <ResponsiveContainer width="100%" height={240}>
@@ -666,49 +683,45 @@ export default function AdminDashboard() {
                       <Pie data={membershipData} cx="50%" cy="50%" innerRadius={55} outerRadius={90} paddingAngle={4} dataKey="value" strokeWidth={0}>
                         {membershipData.map((entry, index) => (<Cell key={index} fill={entry.color} />))}
                       </Pie>
-                      <Tooltip content={<PieTooltip />} />
-                      <Legend verticalAlign="bottom" iconType="circle" iconSize={8} formatter={(value: string) => (<span className="font-body text-xs text-muted-foreground">{value}</span>)} />
+                      <Tooltip content={<PieTooltipComp />} />
+                      <Legend verticalAlign="bottom" iconType="circle" iconSize={8} formatter={(v: string) => <span className="font-body text-xs text-muted-foreground">{v}</span>} />
                     </PieChart>
                   </ResponsiveContainer>
                 ) : (
-                  <div className="flex items-center justify-center h-[240px] text-muted-foreground text-sm font-body">No data yet</div>
+                  <div className="flex items-center justify-center h-[240px] text-muted-foreground text-sm">No data</div>
                 )}
               </CardContent>
             </Card>
             <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="font-body text-sm uppercase tracking-wider text-muted-foreground">Monthly Payments</CardTitle>
-              </CardHeader>
+              <CardHeader className="pb-2"><CardTitle className="font-body text-sm uppercase tracking-wider text-muted-foreground">Daily Payments</CardTitle></CardHeader>
               <CardContent>
                 <ResponsiveContainer width="100%" height={240}>
-                  <BarChart data={monthlyRevData} barGap={4}>
+                  <BarChart data={dailyRevenueData} barGap={4}>
                     <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
-                    <XAxis dataKey="month" tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} axisLine={false} tickLine={false} />
-                    <YAxis tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} axisLine={false} tickLine={false} width={30} />
-                    <Tooltip content={<CustomTooltip />} />
-                    <Bar dataKey="newSubs" name="Payments" fill="#6366f1" radius={[4, 4, 0, 0]} />
+                    <XAxis dataKey="day" tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} axisLine={false} tickLine={false} interval={Math.max(0, Math.floor(dailyRevenueData.length / 8))} />
+                    <YAxis tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} axisLine={false} tickLine={false} width={30} allowDecimals={false} />
+                    <Tooltip content={<ChartTooltip />} />
+                    <Bar dataKey="payments" name="Payments" fill="#6366f1" radius={[4, 4, 0, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
               </CardContent>
             </Card>
             <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="font-body text-sm uppercase tracking-wider text-muted-foreground">Revenue Trend</CardTitle>
-              </CardHeader>
+              <CardHeader className="pb-2"><CardTitle className="font-body text-sm uppercase tracking-wider text-muted-foreground">Revenue Trend</CardTitle></CardHeader>
               <CardContent>
                 <ResponsiveContainer width="100%" height={240}>
-                  <AreaChart data={monthlyRevData}>
+                  <AreaChart data={dailyRevenueData}>
                     <defs>
-                      <linearGradient id="revenueGradient" x1="0" y1="0" x2="0" y2="1">
+                      <linearGradient id="revGrad" x1="0" y1="0" x2="0" y2="1">
                         <stop offset="0%" stopColor="#6366f1" stopOpacity={0.3} />
                         <stop offset="100%" stopColor="#6366f1" stopOpacity={0} />
                       </linearGradient>
                     </defs>
                     <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
-                    <XAxis dataKey="month" tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} axisLine={false} tickLine={false} />
-                    <YAxis tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} axisLine={false} tickLine={false} width={50} tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`} />
-                    <Tooltip content={<CustomTooltip />} />
-                    <Area type="monotone" dataKey="revenue" name="Revenue" stroke="#6366f1" strokeWidth={2.5} fill="url(#revenueGradient)" dot={{ r: 4, fill: "#6366f1", strokeWidth: 0 }} activeDot={{ r: 6, fill: "#6366f1", strokeWidth: 2, stroke: "#fff" }} />
+                    <XAxis dataKey="day" tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} axisLine={false} tickLine={false} interval={Math.max(0, Math.floor(dailyRevenueData.length / 8))} />
+                    <YAxis tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} axisLine={false} tickLine={false} width={50} tickFormatter={(v) => v >= 1000 ? `${(v / 1000).toFixed(0)}k` : v} />
+                    <Tooltip content={<ChartTooltip />} />
+                    <Area type="monotone" dataKey="revenue" name="Revenue" stroke="#6366f1" strokeWidth={2.5} fill="url(#revGrad)" dot={{ r: 3, fill: "#6366f1", strokeWidth: 0 }} activeDot={{ r: 5, fill: "#6366f1", strokeWidth: 2, stroke: "#fff" }} />
                   </AreaChart>
                 </ResponsiveContainer>
               </CardContent>
@@ -718,9 +731,9 @@ export default function AdminDashboard() {
           <Card className="border-dashed">
             <CardContent className="flex flex-col items-center justify-center py-12 text-center">
               <DollarSign className="h-10 w-10 text-muted-foreground/40 mb-3" />
-              <p className="font-body text-sm text-muted-foreground mb-1">No payment data yet</p>
-              <p className="font-body text-xs text-muted-foreground mb-4">Start recording subscription payments to see your analytics here.</p>
-              <Button asChild size="sm"><Link to="/admin/subscriptions"><Plus className="mr-2 h-3 w-3" /> Add First Payment</Link></Button>
+              <p className="font-body text-sm text-muted-foreground mb-1">No payment data for this period</p>
+              <p className="font-body text-xs text-muted-foreground mb-4">Try a different time range or add payments.</p>
+              <Button asChild size="sm"><Link to="/admin/subscriptions"><Plus className="mr-2 h-3 w-3" /> Add Payment</Link></Button>
             </CardContent>
           </Card>
         )}
@@ -729,7 +742,6 @@ export default function AdminDashboard() {
       {/* ═══════════════════════════════════════════════════════════
           CONTENT STATS
           ═══════════════════════════════════════════════════════════ */}
-
       <div>
         <h2 className="font-body text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">Articles</h2>
         <div className="grid gap-4 sm:grid-cols-3">
